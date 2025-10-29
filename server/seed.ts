@@ -246,6 +246,267 @@ export async function seedDatabase() {
     }
 
     console.log('Database seeded with 5 providers, ratings, and 7 services');
+
+    // ===== JIFFY-STYLE DATA =====
+    
+    // Create Price Cards (fixed-price instant booking tasks)
+    const priceCards = [
+      {
+        providerId: createdProviders[0].id,
+        serviceId: null,
+        title: '1-Hour Math Tutoring Session',
+        category: 'Tutoring & Education',
+        city: 'New York',
+        description: 'One-on-one math tutoring session covering algebra, geometry, or calculus. Perfect for homework help or test prep.',
+        basePrice: 60,
+        addOns: [
+          { name: 'Extra 30 minutes', price: 25 },
+          { name: 'Practice materials', price: 10 }
+        ],
+        durationMinutes: 60,
+        isActive: true
+      },
+      {
+        providerId: createdProviders[1].id,
+        serviceId: null,
+        title: 'Leaky Faucet Repair',
+        category: 'Home Services',
+        city: 'Los Angeles',
+        description: 'Quick fix for dripping or leaking faucets. Includes diagnosis and repair of common faucet issues.',
+        basePrice: 95,
+        addOns: [
+          { name: 'Parts replacement', price: 40 },
+          { name: 'Same-day service', price: 25 }
+        ],
+        durationMinutes: 45,
+        isActive: true
+      },
+      {
+        providerId: createdProviders[1].id,
+        serviceId: null,
+        title: 'Toilet Repair Service',
+        category: 'Home Services',
+        city: 'Los Angeles',
+        description: 'Repair running toilets, replace flappers, fix fill valves, and resolve other common toilet issues.',
+        basePrice: 85,
+        addOns: [
+          { name: 'Flapper replacement', price: 15 },
+          { name: 'Fill valve replacement', price: 30 }
+        ],
+        durationMinutes: 60,
+        isActive: true
+      },
+      {
+        providerId: createdProviders[2].id,
+        serviceId: null,
+        title: '45-Min Personal Training',
+        category: 'Fitness & Wellness',
+        city: 'Chicago',
+        description: 'Personalized training session focused on your fitness goals. Includes warm-up, workout, and cool-down.',
+        basePrice: 65,
+        addOns: [
+          { name: 'Nutrition consultation', price: 20 },
+          { name: 'Progress tracking app', price: 15 }
+        ],
+        durationMinutes: 45,
+        isActive: true
+      },
+      {
+        providerId: createdProviders[3].id,
+        serviceId: null,
+        title: 'Beginner Piano Lesson',
+        category: 'Music & Arts',
+        city: 'Austin',
+        description: 'Introduction to piano for beginners. Learn basic techniques, reading music, and simple songs.',
+        basePrice: 55,
+        addOns: [
+          { name: 'Music book', price: 18 },
+          { name: 'Extended to 60 min', price: 20 }
+        ],
+        durationMinutes: 45,
+        isActive: true
+      },
+      {
+        providerId: createdProviders[4].id,
+        serviceId: null,
+        title: 'Website Bug Fix (1 Hour)',
+        category: 'Technology',
+        city: 'San Francisco',
+        description: 'Quick debugging and fixes for your website. HTML, CSS, JavaScript issues resolved.',
+        basePrice: 95,
+        addOns: [
+          { name: 'Additional hour', price: 90 },
+          { name: 'Urgent priority', price: 50 }
+        ],
+        durationMinutes: 60,
+        isActive: true
+      }
+    ];
+
+    const createdPriceCards = [];
+    for (const priceCard of priceCards) {
+      const created = await storage.createPriceCard(priceCard);
+      createdPriceCards.push(created);
+    }
+
+    console.log('Created 6 price cards for instant booking');
+
+    // Create Availability Schedules for providers
+    const availabilities = [
+      {
+        providerId: createdProviders[0].id,
+        weekly: [
+          { day: 1, slots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
+          { day: 2, slots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
+          { day: 3, slots: [{ start: '09:00', end: '12:00' }] },
+          { day: 4, slots: [{ start: '14:00', end: '20:00' }] },
+          { day: 5, slots: [{ start: '10:00', end: '16:00' }] }
+        ],
+        exceptions: []
+      },
+      {
+        providerId: createdProviders[1].id,
+        weekly: [
+          { day: 0, slots: [{ start: '08:00', end: '17:00' }] },
+          { day: 1, slots: [{ start: '08:00', end: '17:00' }] },
+          { day: 2, slots: [{ start: '08:00', end: '17:00' }] },
+          { day: 3, slots: [{ start: '08:00', end: '17:00' }] },
+          { day: 4, slots: [{ start: '08:00', end: '17:00' }] },
+          { day: 5, slots: [{ start: '09:00', end: '14:00' }] }
+        ],
+        exceptions: []
+      },
+      {
+        providerId: createdProviders[2].id,
+        weekly: [
+          { day: 1, slots: [{ start: '06:00', end: '11:00' }, { start: '17:00', end: '20:00' }] },
+          { day: 2, slots: [{ start: '06:00', end: '11:00' }, { start: '17:00', end: '20:00' }] },
+          { day: 3, slots: [{ start: '06:00', end: '11:00' }, { start: '17:00', end: '20:00' }] },
+          { day: 4, slots: [{ start: '06:00', end: '11:00' }, { start: '17:00', end: '20:00' }] },
+          { day: 6, slots: [{ start: '08:00', end: '14:00' }] }
+        ],
+        exceptions: []
+      },
+      {
+        providerId: createdProviders[3].id,
+        weekly: [
+          { day: 1, slots: [{ start: '14:00', end: '21:00' }] },
+          { day: 2, slots: [{ start: '14:00', end: '21:00' }] },
+          { day: 3, slots: [{ start: '14:00', end: '21:00' }] },
+          { day: 5, slots: [{ start: '10:00', end: '18:00' }] },
+          { day: 6, slots: [{ start: '10:00', end: '16:00' }] }
+        ],
+        exceptions: []
+      },
+      {
+        providerId: createdProviders[4].id,
+        weekly: [
+          { day: 1, slots: [{ start: '09:00', end: '18:00' }] },
+          { day: 2, slots: [{ start: '09:00', end: '18:00' }] },
+          { day: 3, slots: [{ start: '09:00', end: '18:00' }] },
+          { day: 4, slots: [{ start: '09:00', end: '18:00' }] },
+          { day: 5, slots: [{ start: '10:00', end: '15:00' }] }
+        ],
+        exceptions: []
+      }
+    ];
+
+    for (const availability of availabilities) {
+      await storage.setAvailability(availability);
+    }
+
+    console.log('Created availability schedules for 5 providers');
+
+    // Create demo customer user
+    const customerUser = await storage.createUser({
+      username: 'john_customer',
+      email: 'john.customer@example.com',
+      password: hashedPassword,
+      role: 'customer',
+      firstName: 'John',
+      lastName: 'Customer'
+    });
+
+    // Create addresses for demo customer
+    const addresses = [
+      {
+        userId: customerUser.id,
+        label: 'Home',
+        line1: '123 Main Street',
+        line2: 'Apt 4B',
+        city: 'New York',
+        postalCode: '10001',
+        lat: 40.7484,
+        lng: -73.9857,
+        isDefault: true
+      },
+      {
+        userId: customerUser.id,
+        label: 'Office',
+        line1: '456 Business Ave',
+        line2: 'Suite 200',
+        city: 'New York',
+        postalCode: '10002',
+        lat: 40.7589,
+        lng: -73.9851,
+        isDefault: false
+      }
+    ];
+
+    const createdAddresses = [];
+    for (const address of addresses) {
+      const created = await storage.createAddress(address);
+      createdAddresses.push(created);
+    }
+
+    console.log('Created demo customer with 2 addresses');
+
+    // Create demo bookings
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(14, 0, 0, 0);
+
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    nextWeek.setHours(10, 0, 0, 0);
+
+    const bookings = [
+      {
+        customerId: customerUser.id,
+        providerId: createdProviders[0].id,
+        priceCardId: createdPriceCards[0].id,
+        addressId: createdAddresses[0].id,
+        scheduledAt: tomorrow,
+        durationMinutes: 60,
+        addOns: [{ name: 'Practice materials', price: 10 }],
+        bookingRef: 'DEMO0001',
+        subtotal: 70,
+        tax: 0,
+        total: 70,
+        notes: 'Please focus on algebra equations'
+      },
+      {
+        customerId: customerUser.id,
+        providerId: createdProviders[1].id,
+        priceCardId: createdPriceCards[1].id,
+        addressId: createdAddresses[0].id,
+        scheduledAt: nextWeek,
+        durationMinutes: 45,
+        addOns: [],
+        bookingRef: 'DEMO0002',
+        subtotal: 95,
+        tax: 0,
+        total: 95,
+        notes: 'Kitchen sink is dripping'
+      }
+    ];
+
+    for (const booking of bookings) {
+      await storage.createBooking(booking);
+    }
+
+    console.log('Created 2 demo bookings (1 for tomorrow, 1 for next week)');
+    console.log('=== JIFFY-STYLE SEEDING COMPLETE ===');
   } catch (error) {
     console.error('Error seeding database:', error);
   }
