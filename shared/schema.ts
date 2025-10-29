@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, doublePrecision, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,49 +9,66 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  password: text("password").notNull(),
   role: text("role").notNull().$type<"customer" | "provider" | "admin">(),
   photoUrl: text("photo_url"),
-  bio: text("bio"),
-  skills: text("skills").array().notNull().default(sql`ARRAY[]::text[]`),
-  experienceYears: integer("experience_years"),
-  hourlyRate: integer("hourly_rate"),
+  username: text("username"),
+  categoryId: text("category_id"),
   city: text("city"),
-  location: jsonb("location").$type<{ lat: number; lng: number }>(),
-  ratingAvg: doublePrecision("rating_avg").notNull().default(0),
-  ratingCount: integer("rating_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
-  passwordHash: true,
-  ratingAvg: true,
-  ratingCount: true,
   createdAt: true,
-}).extend({
-  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-// ============= SERVICE CATEGORY TABLE =============
-export const serviceCategories = pgTable("service_categories", {
+// ============= CATEGORY TABLE =============
+export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  iconUrl: text("icon_url").notNull(),
-  active: boolean("active").notNull().default(true),
+  description: text("description").notNull(),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 
-export const insertServiceCategorySchema = createInsertSchema(serviceCategories).omit({
+export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
 });
 
-export type InsertServiceCategory = z.infer<typeof insertServiceCategorySchema>;
-export type ServiceCategory = typeof serviceCategories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
+
+// ============= PROVIDER TABLE =============
+export const providers = pgTable("providers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  categoryId: varchar("category_id").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  city: text("city").notNull(),
+  hourlyRate: integer("hourly_rate").notNull(),
+  experienceYears: integer("experience_years").notNull(),
+  skills: text("skills").array().notNull().default(sql`ARRAY[]::text[]`),
+  bio: text("bio").notNull(),
+  photoUrl: text("photo_url"),
+  ratingAvg: doublePrecision("rating_avg").notNull().default(0),
+  ratingCount: integer("rating_count").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const insertProviderSchema = createInsertSchema(providers).omit({
+  id: true,
+  ratingAvg: true,
+  ratingCount: true,
+  createdAt: true,
+});
+
+export type InsertProvider = z.infer<typeof insertProviderSchema>;
+export type Provider = typeof providers.$inferSelect;
 
 // ============= SERVICE TABLE =============
 export const services = pgTable("services", {
@@ -96,6 +113,7 @@ export const inquiries = pgTable("inquiries", {
 
 export const insertInquirySchema = createInsertSchema(inquiries).omit({
   id: true,
+  status: true,
   createdAt: true,
 }).extend({
   message: z.string().min(10, "Message must be at least 10 characters"),
@@ -126,10 +144,9 @@ export type Message = typeof messages.$inferSelect;
 // ============= REVIEW TABLE =============
 export const reviews = pgTable("reviews", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  bookingOrInquiryId: varchar("booking_or_inquiry_id").notNull(),
+  providerId: varchar("provider_id").notNull(),
+  customerId: varchar("customer_id").notNull(),
   serviceId: varchar("service_id").notNull(),
-  raterId: varchar("rater_id").notNull(),
-  rateeId: varchar("ratee_id").notNull(),
   rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
@@ -154,5 +171,13 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export const registerSchema = insertUserSchema;
-export type RegisterInput = InsertUser;
+export const registerFormSchema = insertUserSchema.extend({
+  confirmPassword: z.string(),
+  categoryId: z.string().optional(),
+  city: z.string().optional(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export type RegisterFormInput = z.infer<typeof registerFormSchema>;

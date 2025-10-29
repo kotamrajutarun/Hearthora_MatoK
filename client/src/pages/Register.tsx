@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema, type RegisterInput } from '@shared/schema';
+import { registerFormSchema, type RegisterFormInput } from '@shared/schema';
 import {
   Form,
   FormControl,
@@ -22,17 +22,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { z } from 'zod';
-
-const registerFormSchema = registerSchema.extend({
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type RegisterFormInput = z.infer<typeof registerFormSchema>;
-
 export default function Register() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();

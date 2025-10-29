@@ -1,4 +1,11 @@
 import { 
+  users,
+  categories,
+  providers,
+  services,
+  inquiries,
+  messages,
+  reviews,
   type User, 
   type InsertUser,
   type Category,
@@ -14,7 +21,8 @@ import {
   type Review,
   type InsertReview
 } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, and, gte, lte, like, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -74,79 +82,67 @@ export interface IStorage {
   updateReview(id: string, updates: Partial<Review>): Promise<Review | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private categories: Map<string, Category>;
-  private providers: Map<string, Provider>;
-  private services: Map<string, Service>;
-  private inquiries: Map<string, Inquiry>;
-  private messages: Map<string, Message>;
-  private reviews: Map<string, Review>;
-
-  constructor() {
-    this.users = new Map();
-    this.categories = new Map();
-    this.providers = new Map();
-    this.services = new Map();
-    this.inquiries = new Map();
-    this.messages = new Map();
-    this.reviews = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
+  // User methods
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) return undefined;
-    const updatedUser = { ...user, ...updates };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    const [updated] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updated || undefined;
   }
 
+  // Category methods
   async getAllCategories(): Promise<Category[]> {
-    return Array.from(this.categories.values());
+    return await db.select().from(categories);
   }
 
   async getCategory(id: string): Promise<Category | undefined> {
-    return this.categories.get(id);
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
   }
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
-    const id = randomUUID();
-    const category: Category = { ...insertCategory, id };
-    this.categories.set(id, category);
+    const [category] = await db
+      .insert(categories)
+      .values(insertCategory)
+      .returning();
     return category;
   }
 
+  // Provider methods
   async getProvider(id: string): Promise<Provider | undefined> {
-    return this.providers.get(id);
+    const [provider] = await db.select().from(providers).where(eq(providers.id, id));
+    return provider || undefined;
   }
 
   async getProviderByUserId(userId: string): Promise<Provider | undefined> {
-    return Array.from(this.providers.values()).find(
-      (provider) => provider.userId === userId,
-    );
+    const [provider] = await db.select().from(providers).where(eq(providers.userId, userId));
+    return provider || undefined;
   }
 
   async getAllProviders(filters?: {
@@ -155,54 +151,58 @@ export class MemStorage implements IStorage {
     minRating?: number;
     maxHourlyRate?: number;
   }): Promise<Provider[]> {
-    let providers = Array.from(this.providers.values());
+    let query = db.select().from(providers);
     
+    const conditions = [];
     if (filters?.categoryId) {
-      providers = providers.filter((p) => p.categoryId === filters.categoryId);
+      conditions.push(eq(providers.categoryId, filters.categoryId));
     }
     if (filters?.city) {
-      providers = providers.filter((p) => 
-        p.city.toLowerCase().includes(filters.city!.toLowerCase())
-      );
+      conditions.push(like(providers.city, `%${filters.city}%`));
     }
-    if (filters?.minRating) {
-      providers = providers.filter((p) => p.ratingAvg >= filters.minRating!);
+    if (filters?.minRating !== undefined) {
+      conditions.push(gte(providers.ratingAvg, filters.minRating));
     }
-    if (filters?.maxHourlyRate) {
-      providers = providers.filter((p) => p.hourlyRate <= filters.maxHourlyRate!);
+    if (filters?.maxHourlyRate !== undefined) {
+      conditions.push(lte(providers.hourlyRate, filters.maxHourlyRate));
     }
     
-    return providers;
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query;
   }
 
   async createProvider(insertProvider: InsertProvider): Promise<Provider> {
-    const id = randomUUID();
-    const provider: Provider = { 
-      ...insertProvider, 
-      id,
-      ratingAvg: 0,
-      ratingCount: 0
-    };
-    this.providers.set(id, provider);
+    const [provider] = await db
+      .insert(providers)
+      .values({
+        ...insertProvider,
+        ratingAvg: 0,
+        ratingCount: 0
+      })
+      .returning();
     return provider;
   }
 
   async updateProvider(id: string, updates: Partial<Provider>): Promise<Provider | undefined> {
-    const provider = this.providers.get(id);
-    if (!provider) return undefined;
-    const updatedProvider = { ...provider, ...updates };
-    this.providers.set(id, updatedProvider);
-    return updatedProvider;
+    const [updated] = await db
+      .update(providers)
+      .set(updates)
+      .where(eq(providers.id, id))
+      .returning();
+    return updated || undefined;
   }
 
+  // Service methods
   async getService(id: string): Promise<Service | undefined> {
-    return this.services.get(id);
+    const [service] = await db.select().from(services).where(eq(services.id, id));
+    return service || undefined;
   }
 
   async getServicesByProviderId(providerId: string): Promise<Service[]> {
-    return Array.from(this.services.values()).filter(
-      (service) => service.providerId === providerId,
-    );
+    return await db.select().from(services).where(eq(services.providerId, providerId));
   }
 
   async getAllServices(filters?: {
@@ -211,160 +211,174 @@ export class MemStorage implements IStorage {
     minPrice?: number;
     maxPrice?: number;
   }): Promise<Service[]> {
-    let services = Array.from(this.services.values());
+    let query = db.select().from(services);
     
+    const conditions = [];
     if (filters?.categoryId) {
-      services = services.filter((s) => s.categoryId === filters.categoryId);
+      conditions.push(eq(services.categoryId, filters.categoryId));
     }
     if (filters?.mode) {
-      services = services.filter((s) => s.mode === filters.mode);
+      conditions.push(eq(services.mode, filters.mode));
     }
     if (filters?.minPrice !== undefined) {
-      services = services.filter((s) => s.price >= filters.minPrice!);
+      conditions.push(gte(services.price, filters.minPrice));
     }
     if (filters?.maxPrice !== undefined) {
-      services = services.filter((s) => s.price <= filters.maxPrice!);
+      conditions.push(lte(services.price, filters.maxPrice));
     }
     
-    return services;
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query;
   }
 
   async createService(insertService: InsertService): Promise<Service> {
-    const id = randomUUID();
-    const service: Service = { 
-      ...insertService, 
-      id,
-      ratingAvg: 0,
-      ratingCount: 0
-    };
-    this.services.set(id, service);
+    const [service] = await db
+      .insert(services)
+      .values({
+        ...insertService,
+        ratingAvg: 0,
+        ratingCount: 0
+      })
+      .returning();
     return service;
   }
 
   async updateService(id: string, updates: Partial<Service>): Promise<Service | undefined> {
-    const service = this.services.get(id);
-    if (!service) return undefined;
-    const updatedService = { ...service, ...updates };
-    this.services.set(id, updatedService);
-    return updatedService;
+    const [updated] = await db
+      .update(services)
+      .set(updates)
+      .where(eq(services.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteService(id: string): Promise<boolean> {
-    return this.services.delete(id);
+    const result = await db.delete(services).where(eq(services.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
+  // Inquiry methods
   async getInquiry(id: string): Promise<Inquiry | undefined> {
-    return this.inquiries.get(id);
+    const [inquiry] = await db.select().from(inquiries).where(eq(inquiries.id, id));
+    return inquiry || undefined;
   }
 
   async getInquiriesByCustomerId(customerId: string): Promise<Inquiry[]> {
-    return Array.from(this.inquiries.values()).filter(
-      (inquiry) => inquiry.customerId === customerId,
-    );
+    return await db.select().from(inquiries).where(eq(inquiries.customerId, customerId));
   }
 
   async getInquiriesByProviderId(providerId: string): Promise<Inquiry[]> {
-    return Array.from(this.inquiries.values()).filter(
-      (inquiry) => inquiry.providerId === providerId,
-    );
+    return await db.select().from(inquiries).where(eq(inquiries.providerId, providerId));
   }
 
   async createInquiry(insertInquiry: InsertInquiry): Promise<Inquiry> {
-    const id = randomUUID();
-    const inquiry: Inquiry = { 
-      ...insertInquiry, 
-      id,
-      status: 'new',
-      createdAt: new Date()
-    };
-    this.inquiries.set(id, inquiry);
+    const [inquiry] = await db
+      .insert(inquiries)
+      .values({
+        ...insertInquiry,
+        status: 'new',
+        createdAt: new Date()
+      })
+      .returning();
     return inquiry;
   }
 
   async updateInquiry(id: string, updates: Partial<Inquiry>): Promise<Inquiry | undefined> {
-    const inquiry = this.inquiries.get(id);
-    if (!inquiry) return undefined;
-    const updatedInquiry = { ...inquiry, ...updates };
-    this.inquiries.set(id, updatedInquiry);
-    return updatedInquiry;
+    const [updated] = await db
+      .update(inquiries)
+      .set(updates)
+      .where(eq(inquiries.id, id))
+      .returning();
+    return updated || undefined;
   }
 
+  // Message methods
   async getMessage(id: string): Promise<Message | undefined> {
-    return this.messages.get(id);
+    const [message] = await db.select().from(messages).where(eq(messages.id, id));
+    return message || undefined;
   }
 
   async getMessagesByInquiryId(inquiryId: string): Promise<Message[]> {
-    return Array.from(this.messages.values())
-      .filter((message) => message.inquiryId === inquiryId)
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.inquiryId, inquiryId))
+      .orderBy(messages.createdAt);
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const id = randomUUID();
-    const message: Message = { 
-      ...insertMessage, 
-      id,
-      createdAt: new Date()
-    };
-    this.messages.set(id, message);
+    const [message] = await db
+      .insert(messages)
+      .values({
+        ...insertMessage,
+        createdAt: new Date()
+      })
+      .returning();
     return message;
   }
 
+  // Review methods
   async getReview(id: string): Promise<Review | undefined> {
-    return this.reviews.get(id);
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
+    return review || undefined;
   }
 
   async getReviewsByProviderId(providerId: string): Promise<Review[]> {
-    return Array.from(this.reviews.values())
-      .filter((review) => review.providerId === providerId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.providerId, providerId))
+      .orderBy(desc(reviews.createdAt));
   }
 
   async getReviewsByCustomerId(customerId: string): Promise<Review[]> {
-    return Array.from(this.reviews.values()).filter(
-      (review) => review.customerId === customerId,
-    );
+    return await db.select().from(reviews).where(eq(reviews.customerId, customerId));
   }
 
   async createReview(insertReview: InsertReview): Promise<Review> {
-    const id = randomUUID();
-    const review: Review = { 
-      ...insertReview, 
-      id,
-      createdAt: new Date()
-    };
-    this.reviews.set(id, review);
+    const [review] = await db
+      .insert(reviews)
+      .values({
+        ...insertReview,
+        createdAt: new Date()
+      })
+      .returning();
     
+    // Update provider rating
     const providerReviews = await this.getReviewsByProviderId(insertReview.providerId);
     const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length;
     
-    const provider = await this.getProvider(insertReview.providerId);
-    if (provider) {
-      await this.updateProvider(insertReview.providerId, {
-        ratingAvg: Number(avgRating.toFixed(1)),
-        ratingCount: providerReviews.length
-      });
-    }
+    await this.updateProvider(insertReview.providerId, {
+      ratingAvg: Number(avgRating.toFixed(1)),
+      ratingCount: providerReviews.length
+    });
     
     return review;
   }
 
   async updateReview(id: string, updates: Partial<Review>): Promise<Review | undefined> {
-    const review = this.reviews.get(id);
-    if (!review) return undefined;
-    const updatedReview = { ...review, ...updates };
-    this.reviews.set(id, updatedReview);
+    const [updated] = await db
+      .update(reviews)
+      .set(updates)
+      .where(eq(reviews.id, id))
+      .returning();
     
-    const providerReviews = await this.getReviewsByProviderId(review.providerId);
-    const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length;
+    if (updated) {
+      // Recalculate provider rating
+      const providerReviews = await this.getReviewsByProviderId(updated.providerId);
+      const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length;
+      
+      await this.updateProvider(updated.providerId, {
+        ratingAvg: Number(avgRating.toFixed(1)),
+        ratingCount: providerReviews.length
+      });
+    }
     
-    await this.updateProvider(review.providerId, {
-      ratingAvg: Number(avgRating.toFixed(1)),
-      ratingCount: providerReviews.length
-    });
-    
-    return updatedReview;
+    return updated || undefined;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
