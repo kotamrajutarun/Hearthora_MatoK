@@ -64,10 +64,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      req.session.userId = user.id;
-      
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      req.session.regenerate((err) => {
+        if (err) {
+          return res.status(500).json({ error: "Session error" });
+        }
+        req.session.userId = user.id;
+        
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
@@ -91,10 +96,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      req.session.userId = user.id;
-      
-      const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      req.session.regenerate((err) => {
+        if (err) {
+          return res.status(500).json({ error: "Session error" });
+        }
+        req.session.userId = user.id;
+        
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

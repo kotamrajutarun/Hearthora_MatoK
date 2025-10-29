@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Search, Menu, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
@@ -10,13 +9,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, LogOut } from 'lucide-react';
 
-export function Header() {
-  const { user, logout, isAuthenticated } = useAuth();
+export default function Header() {
   const [, setLocation] = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setLocation('/');
   };
 
@@ -26,33 +26,26 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between gap-4">
-        <Link href="/">
-          <a className="flex items-center gap-2 hover-elevate rounded-lg px-3 py-2" data-testid="link-home">
-            <div className="text-2xl font-bold text-primary">Hearthora</div>
-          </a>
-        </Link>
-
-        <div className="hidden md:flex items-center flex-1 max-w-2xl mx-8">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Search for services..."
-              className="w-full h-12 pl-10 pr-4 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              data-testid="input-search"
-            />
-          </div>
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-8">
+          <Link href="/">
+            <a className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">H</span>
+              </div>
+              <span className="text-xl font-semibold">Hearthora</span>
+            </a>
+          </Link>
         </div>
 
         <nav className="flex items-center gap-2">
-          <Link href="/providers">
-            <a>
-              <Button variant="ghost" data-testid="link-providers">
-                Browse Providers
-              </Button>
-            </a>
-          </Link>
+          <Button 
+            variant="ghost" 
+            onClick={() => setLocation('/providers')}
+            data-testid="link-providers"
+          >
+            Browse Providers
+          </Button>
 
           {isAuthenticated ? (
             <DropdownMenu>
@@ -71,23 +64,15 @@ export function Header() {
                 </div>
                 <DropdownMenuSeparator />
                 {user?.role === 'provider' && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/provider">
-                      <a className="w-full flex items-center gap-2" data-testid="link-dashboard">
-                        <User className="h-4 w-4" />
-                        Dashboard
-                      </a>
-                    </Link>
+                  <DropdownMenuItem onClick={() => setLocation('/dashboard/provider')} data-testid="link-dashboard">
+                    <User className="h-4 w-4 mr-2" />
+                    Dashboard
                   </DropdownMenuItem>
                 )}
                 {user?.role === 'admin' && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/admin">
-                      <a className="w-full flex items-center gap-2" data-testid="link-admin">
-                        <User className="h-4 w-4" />
-                        Admin Panel
-                      </a>
-                    </Link>
+                  <DropdownMenuItem onClick={() => setLocation('/dashboard/admin')} data-testid="link-admin">
+                    <User className="h-4 w-4 mr-2" />
+                    Admin Panel
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -99,20 +84,19 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Link href="/login">
-                <a>
-                  <Button variant="ghost" data-testid="link-login">
-                    Login
-                  </Button>
-                </a>
-              </Link>
-              <Link href="/register">
-                <a>
-                  <Button data-testid="link-register">
-                    Sign Up
-                  </Button>
-                </a>
-              </Link>
+              <Button 
+                variant="ghost" 
+                onClick={() => setLocation('/login')}
+                data-testid="link-login"
+              >
+                Login
+              </Button>
+              <Button 
+                onClick={() => setLocation('/register')}
+                data-testid="link-register"
+              >
+                Sign Up
+              </Button>
             </>
           )}
         </nav>
