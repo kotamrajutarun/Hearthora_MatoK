@@ -9,7 +9,11 @@ import {
   insertServiceSchema,
   insertInquirySchema,
   insertMessageSchema,
-  insertReviewSchema
+  insertReviewSchema,
+  insertPriceCardSchema,
+  insertAvailabilitySchema,
+  insertAddressSchema,
+  insertBookingSchema
 } from "@shared/schema";
 
 declare module "express-session" {
@@ -449,6 +453,540 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const review = await storage.createReview(validatedData);
       res.json(review);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Helper function to generate booking reference
+  function generateBookingRef(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let ref = '';
+    for (let i = 0; i < 8; i++) {
+      ref += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return ref;
+  }
+
+  // ===== PRICE CARDS ROUTES (Jiffy-style) =====
+  
+  app.get("/api/price-cards/public", async (req, res) => {
+    try {
+      const { category, city, q } = req.query;
+      const priceCards = await storage.getPublicPriceCards({
+        category: category as string | undefined,
+        city: city as string | undefined,
+        search: q as string | undefined
+      });
+      res.json(priceCards);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/price-cards/mine", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can access this" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const priceCards = await storage.getPriceCardsByProviderId(provider.id);
+      res.json(priceCards);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/price-cards", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can create price cards" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const validatedData = insertPriceCardSchema.parse({
+        ...req.body,
+        providerId: provider.id
+      });
+
+      const priceCard = await storage.createPriceCard(validatedData);
+      res.json(priceCard);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/price-cards/:id", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can update price cards" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const existing = await storage.getPriceCard(req.params.id);
+      if (!existing || existing.providerId !== provider.id) {
+        return res.status(404).json({ error: "Price card not found" });
+      }
+
+      const safeUpdates = {
+        title: req.body.title,
+        description: req.body.description,
+        category: req.body.category,
+        city: req.body.city,
+        basePrice: req.body.basePrice,
+        addOns: req.body.addOns,
+        durationMinutes: req.body.durationMinutes,
+        isActive: req.body.isActive,
+        serviceId: req.body.serviceId
+      };
+
+      const filtered = Object.fromEntries(
+        Object.entries(safeUpdates).filter(([_, v]) => v !== undefined)
+      );
+
+      const updated = await storage.updatePriceCard(req.params.id, filtered);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/price-cards/:id", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can delete price cards" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const existing = await storage.getPriceCard(req.params.id);
+      if (!existing || existing.providerId !== provider.id) {
+        return res.status(404).json({ error: "Price card not found" });
+      }
+
+      await storage.deletePriceCard(req.params.id);
+      res.json({ message: "Price card deleted" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== AVAILABILITY ROUTES =====
+  
+  app.get("/api/availability/mine", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can access this" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const availability = await storage.getAvailabilityByProviderId(provider.id);
+      res.json(availability || { weekly: [], exceptions: [] });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/availability/public/:providerId", async (req, res) => {
+    try {
+      const availability = await storage.getAvailabilityByProviderId(req.params.providerId);
+      res.json(availability || { weekly: [], exceptions: [] });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/availability/weekly", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can set availability" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const validatedData = insertAvailabilitySchema.parse({
+        providerId: provider.id,
+        weekly: req.body.weekly || [],
+        exceptions: req.body.exceptions || []
+      });
+
+      const availability = await storage.setAvailability(validatedData);
+      res.json(availability);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // ===== ADDRESS ROUTES =====
+  
+  app.get("/api/addresses", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const addresses = await storage.getAddressesByUserId(authReq.userId!);
+      res.json(addresses);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/addresses", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const validatedData = insertAddressSchema.parse({
+        ...req.body,
+        userId: authReq.userId
+      });
+
+      const address = await storage.createAddress(validatedData);
+      res.json(address);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/addresses/:id", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const address = await storage.getAddress(req.params.id);
+      if (!address || address.userId !== authReq.userId) {
+        return res.status(404).json({ error: "Address not found" });
+      }
+
+      const safeUpdates = {
+        label: req.body.label,
+        line1: req.body.line1,
+        line2: req.body.line2,
+        city: req.body.city,
+        postalCode: req.body.postalCode,
+        lat: req.body.lat,
+        lng: req.body.lng
+      };
+
+      const filtered = Object.fromEntries(
+        Object.entries(safeUpdates).filter(([_, v]) => v !== undefined)
+      );
+
+      const updated = await storage.updateAddress(req.params.id, filtered);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/addresses/:id/default", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const address = await storage.getAddress(req.params.id);
+      if (!address || address.userId !== authReq.userId) {
+        return res.status(404).json({ error: "Address not found" });
+      }
+
+      const updated = await storage.setDefaultAddress(authReq.userId!, req.params.id);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/addresses/:id", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const address = await storage.getAddress(req.params.id);
+      if (!address || address.userId !== authReq.userId) {
+        return res.status(404).json({ error: "Address not found" });
+      }
+
+      await storage.deleteAddress(req.params.id);
+      res.json({ message: "Address deleted" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== BOOKING ROUTES =====
+  
+  app.get("/api/bookings/mine", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let bookings;
+      if (user.role === 'provider') {
+        const provider = await storage.getProviderByUserId(authReq.userId!);
+        if (!provider) {
+          return res.status(404).json({ error: "Provider profile not found" });
+        }
+        const status = req.query.status as string | undefined;
+        bookings = await storage.getBookingsByProviderId(provider.id, { status });
+      } else {
+        bookings = await storage.getBookingsByCustomerId(authReq.userId!);
+      }
+
+      res.json(bookings);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/bookings/ref/:bookingRef", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const booking = await storage.getBookingByRef(req.params.bookingRef);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      if (booking.customerId !== authReq.userId) {
+        const user = await storage.getUser(authReq.userId!);
+        if (user?.role === 'provider') {
+          const provider = await storage.getProviderByUserId(authReq.userId!);
+          if (!provider || booking.providerId !== provider.id) {
+            return res.status(403).json({ error: "Access denied" });
+          }
+        } else {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      }
+
+      res.json(booking);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/bookings/preview", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { priceCardId, addOnNames = [] } = req.body;
+      
+      const priceCard = await storage.getPriceCard(priceCardId);
+      if (!priceCard) {
+        return res.status(404).json({ error: "Price card not found" });
+      }
+
+      const selectedAddOns = priceCard.addOns.filter(addon => addOnNames.includes(addon.name));
+      const subtotal = priceCard.basePrice + selectedAddOns.reduce((sum, addon) => sum + addon.price, 0);
+      const tax = 0;
+      const total = subtotal + tax;
+
+      res.json({
+        basePrice: priceCard.basePrice,
+        addOns: selectedAddOns,
+        subtotal,
+        tax,
+        total,
+        currency: 'CAD'
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/bookings", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role === 'provider') {
+        return res.status(403).json({ error: "Providers cannot create bookings" });
+      }
+
+      const validatedData = insertBookingSchema.parse({
+        ...req.body,
+        customerId: authReq.userId
+      });
+
+      const priceCard = await storage.getPriceCard(validatedData.priceCardId);
+      if (!priceCard) {
+        return res.status(404).json({ error: "Price card not found" });
+      }
+
+      const selectedAddOns = priceCard.addOns.filter(addon => 
+        (req.body.addOnNames || []).includes(addon.name)
+      );
+      const subtotal = priceCard.basePrice + selectedAddOns.reduce((sum, addon) => sum + addon.price, 0);
+      const tax = 0;
+      const total = subtotal + tax;
+
+      const booking = await storage.createBooking({
+        ...validatedData,
+        providerId: priceCard.providerId,
+        durationMinutes: priceCard.durationMinutes,
+        addOns: selectedAddOns,
+        bookingRef: generateBookingRef(),
+        subtotal,
+        tax,
+        total
+      });
+
+      res.json(booking);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/bookings/:id/provider-respond", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can respond to bookings" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const booking = await storage.getBooking(req.params.id);
+      if (!booking || booking.providerId !== provider.id) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      if (booking.status !== 'pending') {
+        return res.status(400).json({ error: "Can only respond to pending bookings" });
+      }
+
+      const { action } = req.body;
+      if (action !== 'accept' && action !== 'decline') {
+        return res.status(400).json({ error: "Invalid action. Must be 'accept' or 'decline'" });
+      }
+
+      const updated = await storage.updateBooking(req.params.id, {
+        status: action === 'accept' ? 'accepted' : 'declined'
+      });
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/bookings/:id/start", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'provider') {
+        return res.status(403).json({ error: "Only providers can start bookings" });
+      }
+
+      const provider = await storage.getProviderByUserId(authReq.userId!);
+      if (!provider) {
+        return res.status(404).json({ error: "Provider profile not found" });
+      }
+
+      const booking = await storage.getBooking(req.params.id);
+      if (!booking || booking.providerId !== provider.id) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      if (booking.status !== 'accepted') {
+        return res.status(400).json({ error: "Can only start accepted bookings" });
+      }
+
+      const updated = await storage.updateBooking(req.params.id, {
+        status: 'in_progress'
+      });
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/bookings/:id/complete", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      const booking = await storage.getBooking(req.params.id);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      const canComplete = booking.customerId === authReq.userId || 
+        (user?.role === 'provider' && (await storage.getProviderByUserId(authReq.userId!))?.id === booking.providerId);
+
+      if (!canComplete) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (booking.status !== 'in_progress') {
+        return res.status(400).json({ error: "Can only complete in-progress bookings" });
+      }
+
+      const updated = await storage.updateBooking(req.params.id, {
+        status: 'completed'
+      });
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/bookings/:id/cancel", authMiddleware, async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      const booking = await storage.getBooking(req.params.id);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      const isCustomer = booking.customerId === authReq.userId;
+      const isAdmin = user?.role === 'admin';
+
+      if (!isCustomer && !isAdmin) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (isCustomer && booking.status !== 'pending') {
+        return res.status(400).json({ error: "Customers can only cancel pending bookings" });
+      }
+
+      const updated = await storage.updateBooking(req.params.id, {
+        status: 'cancelled'
+      });
+
+      res.json(updated);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
