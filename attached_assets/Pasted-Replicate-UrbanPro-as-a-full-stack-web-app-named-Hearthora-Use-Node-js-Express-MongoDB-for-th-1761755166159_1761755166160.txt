@@ -1,0 +1,41 @@
+Replicate UrbanPro as a full-stack web app named “Hearthora.” Use Node.js + Express + MongoDB for the backend and React + Tailwind CSS for the frontend in a /server and /client monorepo.
+
+Core features:
+
+Auth: JWT + bcrypt, roles: customer, provider, admin.
+
+Data models (Mongoose):
+
+User { firstName, lastName, email (unique), passwordHash, role, photoUrl, bio, skills:[String], experienceYears, hourlyRate, city, location{lat,lng}, ratingAvg, ratingCount, createdAt }
+
+ServiceCategory { name, iconUrl, active }
+
+Service { title, description, categoryId, providerId, price, mode: "online"|"in-person", city, active, photos:[String], ratingAvg, ratingCount, createdAt }
+
+Inquiry { customerId, providerId, serviceId, message, status: "new"|"replied"|"closed", createdAt }
+
+Message { inquiryId, senderId, text, createdAt }
+
+Review { bookingOrInquiryId, serviceId, raterId, rateeId, rating, comment, createdAt }
+
+Public pages: Home (hero, search, category chips), Provider List (filters: category, city, mode, min rating, price range), Provider Profile, Service Detail.
+
+Lead/Quote flow (UrbanPro-style): Customer clicks Request Quote → creates Inquiry → in-app Messages thread between customer & provider → provider replies with quote text/price → customer can mark “hired”.
+
+Provider Dashboard: My Profile edit, My Services CRUD, My Inquiries (reply, close), Reviews.
+
+Admin: approve providers, manage categories, moderate reviews.
+
+APIs: /api/auth, /api/categories, /api/services, /api/inquiries, /api/messages, /api/reviews, /api/admin.
+
+Frontend: React Router routes for /, /providers, /provider/:id, /service/:id, /dashboard/provider, /dashboard/admin, /login, /register. Use Axios with credentials, Zustand/Context for auth. Tailwind for UI.
+
+CORS & cookies: Enable credentials.
+
+Env: Use Replit Secrets (MONGODB_URI, JWT_SECRET, PORT).
+
+Dev scripts: root npm run dev runs client+server concurrently; npm run build builds client; npm start serves server.
+
+Seed script: add npm run seed to insert sample categories, 3 provider users, and 12 services.
+
+Build the entire app now.
