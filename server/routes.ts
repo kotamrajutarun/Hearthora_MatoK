@@ -144,13 +144,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/providers", async (req, res) => {
     try {
-      const { categoryId, city, minRating, maxHourlyRate } = req.query;
+      const { categoryId, city, minRating, maxHourlyRate, minPrice, maxPrice, search, sortBy } = req.query;
       
       const filters = {
         categoryId: categoryId as string | undefined,
         city: city as string | undefined,
         minRating: minRating ? Number(minRating) : undefined,
-        maxHourlyRate: maxHourlyRate ? Number(maxHourlyRate) : undefined
+        maxHourlyRate: maxHourlyRate ? Number(maxHourlyRate) : undefined,
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        search: search as string | undefined,
+        sortBy: sortBy as string | undefined
       };
       
       const providers = await storage.getAllProviders(filters);

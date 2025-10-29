@@ -45,6 +45,10 @@ export interface IStorage {
     city?: string;
     minRating?: number;
     maxHourlyRate?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    search?: string;
+    sortBy?: string;
   }): Promise<Provider[]>;
   createProvider(provider: InsertProvider): Promise<Provider>;
   updateProvider(id: string, updates: Partial<Provider>): Promise<Provider | undefined>;
@@ -150,6 +154,10 @@ export class DatabaseStorage implements IStorage {
     city?: string;
     minRating?: number;
     maxHourlyRate?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    search?: string;
+    sortBy?: string;
   }): Promise<Provider[]> {
     let query = db.select().from(providers);
     
@@ -166,9 +174,35 @@ export class DatabaseStorage implements IStorage {
     if (filters?.maxHourlyRate !== undefined) {
       conditions.push(lte(providers.hourlyRate, filters.maxHourlyRate));
     }
+    if (filters?.minPrice !== undefined) {
+      conditions.push(gte(providers.hourlyRate, filters.minPrice));
+    }
+    if (filters?.maxPrice !== undefined) {
+      conditions.push(lte(providers.hourlyRate, filters.maxPrice));
+    }
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        like(providers.bio, searchTerm)
+      );
+    }
     
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
+    }
+    
+    switch (filters?.sortBy) {
+      case 'rating':
+        query = query.orderBy(desc(providers.ratingAvg)) as any;
+        break;
+      case 'price-low':
+        query = query.orderBy(providers.hourlyRate) as any;
+        break;
+      case 'price-high':
+        query = query.orderBy(desc(providers.hourlyRate)) as any;
+        break;
+      default:
+        query = query.orderBy(desc(providers.ratingAvg)) as any;
     }
     
     return await query;

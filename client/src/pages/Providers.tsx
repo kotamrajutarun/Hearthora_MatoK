@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Link } from 'wouter';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useLocation, useSearch } from 'wouter';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Star, MapPin, Filter, DollarSign } from 'lucide-react';
+import { Star, MapPin, Filter, DollarSign, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -15,52 +15,73 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { useQuery } from '@tanstack/react-query';
+import type { SelectCategory } from '@shared/schema';
+
+interface Provider {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photoUrl: string | null;
+  skills: string[];
+  experienceYears: number;
+  hourlyRate: number;
+  city: string;
+  ratingAvg: number;
+  ratingCount: number;
+}
 
 export default function Providers() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedMode, setSelectedMode] = useState<string>('all');
-  const [city, setCity] = useState('');
+  const searchParams = useSearch();
+  const [, setLocation] = useLocation();
+  
+  const params = useMemo(() => new URLSearchParams(searchParams), [searchParams]);
+  const urlCategory = params.get('category') || '';
+  const urlSearch = params.get('search') || '';
+  const urlCity = params.get('city') || '';
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory || 'all');
+  const [city, setCity] = useState(urlCity);
   const [minRating, setMinRating] = useState(0);
   const [priceRange, setPriceRange] = useState([0, 200]);
+  const [sortBy, setSortBy] = useState('relevance');
 
-  const mockProviders = [
-    {
-      id: '1',
-      firstName: 'Sarah',
-      lastName: 'Johnson',
-      photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-      skills: ['Math', 'Physics', 'SAT Prep'],
-      experienceYears: 8,
-      hourlyRate: 60,
-      city: 'New York',
-      ratingAvg: 4.9,
-      ratingCount: 127,
-    },
-    {
-      id: '2',
-      firstName: 'Michael',
-      lastName: 'Chen',
-      photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-      skills: ['Home Repair', 'Plumbing', 'Electrical'],
-      experienceYears: 12,
-      hourlyRate: 85,
-      city: 'Los Angeles',
-      ratingAvg: 4.8,
-      ratingCount: 94,
-    },
-    {
-      id: '3',
-      firstName: 'Emily',
-      lastName: 'Rodriguez',
-      photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily',
-      skills: ['Yoga', 'Pilates', 'Personal Training'],
-      experienceYears: 6,
-      hourlyRate: 50,
-      city: 'Chicago',
-      ratingAvg: 5.0,
-      ratingCount: 68,
-    },
-  ];
+  useEffect(() => {
+    if (urlCategory) setSelectedCategory(urlCategory);
+    if (urlCity) setCity(urlCity);
+  }, [urlCategory, urlCity]);
+
+  const { data: categories } = useQuery<SelectCategory[]>({
+    queryKey: ['/api/categories'],
+  });
+
+  const providersQueryString = useMemo(() => {
+    const params = new URLSearchParams();
+    
+    if (selectedCategory && selectedCategory !== 'all') params.set('categoryId', selectedCategory);
+    if (city) params.set('city', city);
+    if (minRating > 0) params.set('minRating', minRating.toString());
+    if (priceRange[0] > 0) params.set('minPrice', priceRange[0].toString());
+    if (priceRange[1] < 200) params.set('maxPrice', priceRange[1].toString());
+    if (urlSearch) params.set('search', urlSearch);
+    if (sortBy && sortBy !== 'relevance') params.set('sortBy', sortBy);
+    
+    const queryString = params.toString();
+    return queryString ? `?${queryString}` : '';
+  }, [selectedCategory, city, minRating, priceRange, urlSearch, sortBy]);
+
+  const { data: providers, isLoading, error } = useQuery<Provider[]>({
+    queryKey: ['/api/providers' + providersQueryString],
+  });
+
+  const handleClearFilters = () => {
+    setSelectedCategory('all');
+    setCity('');
+    setMinRating(0);
+    setPriceRange([0, 200]);
+    setSortBy('relevance');
+    setLocation('/providers');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,11 +111,15 @@ export default function Providers() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all" data-testid="select-item-all-categories">All Categories</SelectItem>
-                    <SelectItem value="tutoring" data-testid="select-item-tutoring">Tutoring & Education</SelectItem>
-                    <SelectItem value="home" data-testid="select-item-home">Home Services</SelectItem>
-                    <SelectItem value="fitness" data-testid="select-item-fitness">Fitness & Wellness</SelectItem>
-                    <SelectItem value="music" data-testid="select-item-music">Music & Arts</SelectItem>
-                    <SelectItem value="tech" data-testid="select-item-tech">Technology</SelectItem>
+                    {categories?.map((category) => (
+                      <SelectItem 
+                        key={category.id} 
+                        value={category.id.toString()} 
+                        data-testid={`select-item-category-${category.id}`}
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -107,20 +132,6 @@ export default function Providers() {
                   onChange={(e) => setCity(e.target.value)}
                   data-testid="input-city"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Service Mode</Label>
-                <Select value={selectedMode} onValueChange={setSelectedMode}>
-                  <SelectTrigger data-testid="select-mode">
-                    <SelectValue placeholder="All modes" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" data-testid="select-item-all-modes">All Modes</SelectItem>
-                    <SelectItem value="online" data-testid="select-item-online">Online</SelectItem>
-                    <SelectItem value="in-person" data-testid="select-item-in-person">In-Person</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">
@@ -156,7 +167,12 @@ export default function Providers() {
                 </div>
               </div>
 
-              <Button className="w-full" variant="outline" data-testid="button-clear-filters">
+              <Button 
+                className="w-full" 
+                variant="outline" 
+                onClick={handleClearFilters}
+                data-testid="button-clear-filters"
+              >
                 Clear Filters
               </Button>
             </Card>
@@ -164,10 +180,10 @@ export default function Providers() {
 
           <div className="flex-1">
             <div className="mb-6 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing {mockProviders.length} providers
+              <p className="text-sm text-muted-foreground" data-testid="text-provider-count">
+                {isLoading ? 'Loading...' : `Showing ${providers?.length || 0} ${providers?.length === 1 ? 'provider' : 'providers'}`}
               </p>
-              <Select defaultValue="relevance">
+              <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48" data-testid="select-sort">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -180,8 +196,34 @@ export default function Providers() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockProviders.map((provider) => (
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Card key={i} className="p-6 h-full">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="h-24 w-24 rounded-full bg-muted animate-pulse"></div>
+                      <div className="space-y-2 w-full">
+                        <div className="h-6 bg-muted rounded animate-pulse mx-auto w-32"></div>
+                        <div className="h-4 bg-muted rounded animate-pulse mx-auto w-24"></div>
+                        <div className="h-4 bg-muted rounded animate-pulse mx-auto w-20"></div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-destructive mb-2">Failed to load providers</p>
+                <p className="text-sm text-muted-foreground">Please try again later</p>
+              </div>
+            ) : !providers || providers.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg mb-2">No providers found</p>
+                <p className="text-sm text-muted-foreground">Try adjusting your filters</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {providers.map((provider) => (
                 <Link key={provider.id} href={`/provider/${provider.id}`}>
                   <a>
                     <Card className="p-6 hover-elevate active-elevate-2 transition-all h-full" data-testid={`card-provider-${provider.id}`}>
@@ -233,7 +275,8 @@ export default function Providers() {
                   </a>
                 </Link>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
