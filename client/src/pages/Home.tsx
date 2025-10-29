@@ -1,24 +1,46 @@
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Search, MapPin, Star } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Search, MapPin } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import type { SelectCategory } from '@shared/schema';
 import heroImage from '@assets/generated_images/Marketplace_hero_with_service_providers_2fc3d64c.png';
 import educationIcon from '@assets/generated_images/Education_tutoring_category_icon_b62ff152.png';
 import homeIcon from '@assets/generated_images/Home_services_category_icon_f2e65835.png';
 import fitnessIcon from '@assets/generated_images/Fitness_wellness_category_icon_336d67f9.png';
 import musicIcon from '@assets/generated_images/Music_arts_category_icon_5f667012.png';
 import techIcon from '@assets/generated_images/Technology_programming_category_icon_12768fc1.png';
+import { useState, type KeyboardEvent } from 'react';
 
-const categories = [
-  { id: '1', name: 'Tutoring & Education', icon: educationIcon },
-  { id: '2', name: 'Home Services', icon: homeIcon },
-  { id: '3', name: 'Fitness & Wellness', icon: fitnessIcon },
-  { id: '4', name: 'Music & Arts', icon: musicIcon },
-  { id: '5', name: 'Technology', icon: techIcon },
-];
+const categoryIcons: Record<string, string> = {
+  '1': educationIcon,
+  '2': homeIcon,
+  '3': fitnessIcon,
+  '4': musicIcon,
+  '5': techIcon,
+};
 
 export default function Home() {
+  const [, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [locationQuery, setLocationQuery] = useState('');
+
+  const { data: categories, isLoading: categoriesLoading } = useQuery<SelectCategory[]>({
+    queryKey: ['/api/categories'],
+  });
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set('search', searchQuery.trim());
+    if (locationQuery.trim()) params.set('city', locationQuery.trim());
+    setLocation(`/providers${params.toString() ? '?' + params.toString() : ''}`);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
   return (
     <div className="flex flex-col min-h-screen">
       <div className="relative min-h-[500px] md:min-h-[600px] flex items-center">
@@ -46,6 +68,9 @@ export default function Home() {
                 <input
                   type="search"
                   placeholder="What service do you need?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="w-full h-12 pl-10 pr-4 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   data-testid="input-hero-search"
                 />
@@ -55,17 +80,21 @@ export default function Home() {
                 <input
                   type="text"
                   placeholder="City or location"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="w-full h-12 pl-10 pr-4 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   data-testid="input-hero-location"
                 />
               </div>
-              <Link href="/providers">
-                <a>
-                  <Button size="lg" className="w-full sm:w-auto h-12 px-8" data-testid="button-hero-search">
-                    Search
-                  </Button>
-                </a>
-              </Link>
+              <Button 
+                size="lg" 
+                onClick={handleSearch}
+                className="w-full sm:w-auto h-12 px-8" 
+                data-testid="button-hero-search"
+              >
+                Search
+              </Button>
             </div>
           </div>
         </div>
@@ -77,22 +106,37 @@ export default function Home() {
             Browse by Category
           </h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-            {categories.map((category) => (
-              <Link key={category.id} href={`/providers?category=${category.id}`}>
-                <a>
-                  <Card className="p-6 text-center hover-elevate active-elevate-2 transition-all cursor-pointer" data-testid={`card-category-${category.id}`}>
-                    <div className="flex justify-center mb-4">
-                      <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
-                        <img src={category.icon} alt={category.name} className="h-10 w-10" />
+          {categoriesLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Card key={i} className="p-6 text-center">
+                  <div className="flex justify-center mb-4">
+                    <div className="h-16 w-16 rounded-full bg-muted animate-pulse"></div>
+                  </div>
+                  <div className="h-4 bg-muted rounded animate-pulse mx-auto w-24"></div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+              {categories?.map((category) => (
+                <Link key={category.id} href={`/providers?category=${category.id}`}>
+                  <a>
+                    <Card className="p-6 text-center hover-elevate active-elevate-2 transition-all cursor-pointer" data-testid={`card-category-${category.id}`}>
+                      <div className="flex justify-center mb-4">
+                        <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
+                          {categoryIcons[category.id.toString()] && (
+                            <img src={categoryIcons[category.id.toString()]} alt={category.name} className="h-10 w-10" />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <h3 className="font-medium text-sm md:text-base">{category.name}</h3>
-                  </Card>
-                </a>
-              </Link>
-            ))}
-          </div>
+                      <h3 className="font-medium text-sm md:text-base">{category.name}</h3>
+                    </Card>
+                  </a>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
