@@ -748,13 +748,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      console.log('[BOOKINGS/MINE DEBUG] User:', { id: user.id, email: user.email, role: user.role });
-
       let bookings;
       if (user.role === 'provider') {
-        console.log('[BOOKINGS/MINE DEBUG] Looking for provider with userId:', authReq.userId);
         const provider = await storage.getProviderByUserId(authReq.userId!);
-        console.log('[BOOKINGS/MINE DEBUG] Found provider:', provider ? { id: provider.id, userId: provider.userId } : 'NO');
         if (!provider) {
           return res.status(404).json({ error: "Provider profile not found" });
         }
@@ -836,14 +832,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerId: authReq.userId
       });
 
-      console.log('[BOOKING DEBUG] Looking for priceCardId:', validatedData.priceCardId);
       const priceCard = await storage.getPriceCard(validatedData.priceCardId);
-      console.log('[BOOKING DEBUG] Found priceCard:', priceCard ? 'YES' : 'NO', priceCard?.id);
       if (!priceCard) {
-        // Log all available price cards for debugging
-        const allCards = await storage.getPublicPriceCards({});
-        console.log('[BOOKING DEBUG] Available price cards:', allCards.map(c => ({ id: c.id, title: c.title })));
         return res.status(404).json({ error: "Price card not found" });
+      }
+      
+      if (!priceCard.isActive) {
+        return res.status(400).json({ error: "This service is no longer available" });
       }
 
       const selectedAddOns = priceCard.addOns.filter(addon => 

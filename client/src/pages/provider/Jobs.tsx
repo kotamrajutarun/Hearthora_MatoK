@@ -48,7 +48,15 @@ export default function Jobs() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const { data: bookings, isLoading } = useQuery<Booking[]>({
-    queryKey: ['/api/bookings/mine', selectedTab !== 'all' ? selectedTab : undefined].filter(Boolean),
+    queryKey: ['/api/bookings/mine', selectedTab !== 'all' ? { status: selectedTab } : {}],
+    queryFn: async () => {
+      const params = selectedTab !== 'all' ? `?status=${selectedTab}` : '';
+      const res = await fetch(`/api/bookings/mine${params}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
   });
 
   const respondMutation = useMutation({

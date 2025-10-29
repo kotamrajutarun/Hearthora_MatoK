@@ -8,17 +8,19 @@ Hearthora is a professional marketplace platform that enables customers to find 
 
 ## Recent Changes
 
-**October 29, 2025 - Jiffy Instant Booking Integration (IN PROGRESS):**
-- **Backend:** Complete - 23 Jiffy storage methods, 19 API endpoints, field whitelisting security
-- **Frontend:** Complete - InstantBrowse, Addresses, MyBookings, PriceCards, Availability, Jobs pages
+**October 29, 2025 - Jiffy Instant Booking Integration (COMPLETE):**
+- **Backend:** Complete - 23 Jiffy storage methods, 19 API endpoints with security validations
+- **Frontend:** Complete - InstantBrowse, Addresses, MyBookings, PriceCards, Availability, Jobs pages  
 - **Seeding:** Complete - 6 price cards, 5 availability schedules, demo customer (2 addresses), 2 demo bookings
-- **Bug Fixes:**
-  - Fixed booking preview/creation API payload format (priceCardId + addOnNames)
-  - Updated insertBookingSchema to omit providerId/durationMinutes (derived from priceCard)
-  - Updated storage JOINs to include related data (priceCard, address, provider/customer)
-  - Fixed route ordering - moved /provider/price-cards, /provider/availability, /provider/jobs BEFORE /provider/:id to prevent route collision
-  - Added null-safe checks for customer/address fields in Jobs page
-- **Testing:** Customer booking flow works end-to-end (browse → select → book → view MyBookings). Provider Jobs page loads and displays bookings. Testing provider accept/start/complete flow.
+- **Critical Fixes:**
+  - Fixed booking API payload format (priceCardId + addOnNames instead of full objects)
+  - Schema: providerId/durationMinutes derived from priceCard (not user-submitted)
+  - Storage: JOINs include related data (priceCard, address, provider/customer)
+  - Route ordering: Specific /provider/* routes before /provider/:id wildcard
+  - Security: Active priceCard validation prevents booking disabled services
+  - Frontend: Null-safe checks for optional customer/address fields
+  - Query parameters: Status filters properly passed to backend
+- **Verified:** Customer flow (browse → book → view bookings), Provider flow (view jobs, see booking details with customer info)
 
 **October 29, 2025 - UrbanPro Replica Project (COMPLETE):**
 - Design System & Tokens - UrbanPro color palette implemented
