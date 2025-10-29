@@ -12,6 +12,12 @@ import ProviderProfile from "@/pages/ProviderProfile";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ProviderDashboard from "@/pages/ProviderDashboard";
+import InstantBrowse from "@/pages/InstantBrowse";
+import Addresses from "@/pages/Addresses";
+import MyBookings from "@/pages/MyBookings";
+import PriceCards from "@/pages/provider/PriceCards";
+import AvailabilityPage from "@/pages/provider/Availability";
+import Jobs from "@/pages/provider/Jobs";
 import Placeholder from "@/pages/Placeholder";
 import NotFound from "@/pages/not-found";
 
@@ -20,10 +26,16 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/providers" component={Providers} />
+      <Route path="/provider/price-cards" component={PriceCards} />
+      <Route path="/provider/availability" component={AvailabilityPage} />
+      <Route path="/provider/jobs" component={Jobs} />
       <Route path="/provider/:id" component={ProviderProfile} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard/provider" component={ProviderDashboard} />
+      <Route path="/instant-browse" component={InstantBrowse} />
+      <Route path="/my-addresses" component={Addresses} />
+      <Route path="/my-bookings" component={MyBookings} />
       <Route path="/ask-answer">
         {() => <Placeholder title="Ask & Answer" description="Get your questions answered by experts in the community" />}
       </Route>

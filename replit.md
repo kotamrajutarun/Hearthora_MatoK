@@ -4,25 +4,35 @@ A full-stack marketplace web application connecting customers with local service
 
 ## Overview
 
-Hearthora is a professional marketplace platform that enables customers to find and hire local service providers across multiple categories including tutoring, home services, fitness, music & arts, and technology. The platform features inquiry-based quote requests, in-app messaging, provider profiles with ratings/reviews, and comprehensive service listings with advanced filtering.
+Hearthora is a professional marketplace platform that enables customers to find and hire local service providers across multiple categories including tutoring, home services, fitness, music & arts, and technology. The platform features inquiry-based quote requests, in-app messaging, provider profiles with ratings/reviews, comprehensive service listings with advanced filtering, AND Jiffy-style instant booking with fixed-price services.
 
 ## Recent Changes
 
-**October 29, 2025 - UrbanPro Replica Project:**
-- **Task 1 (COMPLETE):** Design System & Tokens - Implemented UrbanPro color palette (primary blue #0073E6/HSL 211 100% 45%, success green, warning orange, star gold), updated index.css with proper Tailwind tokens for both light and dark modes
-- **Task 2 (COMPLETE):** Header/Navigation Component - Replicated UrbanPro header with all navigation links (Browse Providers, Ask & Answer, Success Stories, Paid Courses, Free Classes, Tuition Fees, Write Review, All Categories, Help, Login), UrbanPro CTAs ("Post Learning Need" orange button, "Signup as Tutor" blue outline), sticky header with backdrop blur, mobile responsive hamburger menu
-- Created Placeholder component and 7 new routes for UrbanPro navigation items (/ask-answer, /success-stories, /paid-courses, /free-classes, /tuition-fees, /write-review, /help)
-- Bug fixes: Fixed nested anchor tag issues in Header, Home, Footer components; fixed LSP type errors (SelectCategory → Category)
-- Design guidelines documented in design_guidelines.md with UrbanPro specifications
+**October 29, 2025 - Jiffy Instant Booking Integration (IN PROGRESS):**
+- **Backend:** Complete - 23 Jiffy storage methods, 19 API endpoints, field whitelisting security
+- **Frontend:** Complete - InstantBrowse, Addresses, MyBookings, PriceCards, Availability, Jobs pages
+- **Seeding:** Complete - 6 price cards, 5 availability schedules, demo customer (2 addresses), 2 demo bookings
+- **Bug Fixes:**
+  - Fixed booking preview/creation API payload format (priceCardId + addOnNames)
+  - Updated insertBookingSchema to omit providerId/durationMinutes (derived from priceCard)
+  - Updated storage JOINs to include related data (priceCard, address, provider/customer)
+  - Fixed route ordering - moved /provider/price-cards, /provider/availability, /provider/jobs BEFORE /provider/:id to prevent route collision
+  - Added null-safe checks for customer/address fields in Jobs page
+- **Testing:** Customer booking flow works end-to-end (browse → select → book → view MyBookings). Provider Jobs page loads and displays bookings. Testing provider accept/start/complete flow.
 
-**Previous (MVP):**
-- Complete MVP features: Home, Providers list (with working filters/sort), Provider Profile
+**October 29, 2025 - UrbanPro Replica Project (COMPLETE):**
+- Design System & Tokens - UrbanPro color palette implemented
+- Header/Navigation Component - Full UrbanPro header with all navigation
+- Placeholder pages for 7 navigation items
+- Bug fixes: Nested anchor tags, LSP type errors
+
+**Previous (MVP - COMPLETE):**
+- Complete MVP features: Home, Providers list, Provider Profile
 - Database: PostgreSQL with Drizzle ORM, seeded with 5 categories, 5 providers, 7 services
-- Backend: Session-based auth, CRUD operations, role-based access control, all API routes functional
-- Frontend: TanStack Query integration, loading/error/empty states, real-time data fetching
-- Provider Profile: Real provider data, services display, reviews (empty state), functional quote request dialog
-- Security: Session regeneration, sameSite cookies, bcrypt password hashing (salt rounds = 10)
-- Testing: Authentication flow, providers listing filters/sort, category navigation
+- Backend: Session-based auth, CRUD operations, role-based access control
+- Frontend: TanStack Query integration, loading/error/empty states
+- Security: Session regeneration, sameSite cookies, bcrypt hashing
+- Testing: Authentication flow, providers listing filters/sort
 
 ## Project Architecture
 

@@ -643,26 +643,46 @@ export class DatabaseStorage implements IStorage {
     return booking || undefined;
   }
 
-  async getBookingsByCustomerId(customerId: string): Promise<Booking[]> {
-    return await db
-      .select()
+  async getBookingsByCustomerId(customerId: string): Promise<any[]> {
+    const results = await db
+      .select({
+        booking: bookings,
+        priceCard: priceCards,
+        address: addresses,
+        provider: providers,
+      })
       .from(bookings)
+      .leftJoin(priceCards, eq(bookings.priceCardId, priceCards.id))
+      .leftJoin(addresses, eq(bookings.addressId, addresses.id))
+      .leftJoin(providers, eq(bookings.providerId, providers.id))
       .where(eq(bookings.customerId, customerId))
       .orderBy(desc(bookings.createdAt));
+    
+    return results.map(r => ({ ...r.booking, priceCard: r.priceCard, address: r.address, provider: r.provider }));
   }
 
-  async getBookingsByProviderId(providerId: string, filters?: { status?: string }): Promise<Booking[]> {
+  async getBookingsByProviderId(providerId: string, filters?: { status?: string }): Promise<any[]> {
     const conditions = [eq(bookings.providerId, providerId)];
     
     if (filters?.status) {
       conditions.push(eq(bookings.status, filters.status as any));
     }
     
-    return await db
-      .select()
+    const results = await db
+      .select({
+        booking: bookings,
+        priceCard: priceCards,
+        address: addresses,
+        customer: users,
+      })
       .from(bookings)
+      .leftJoin(priceCards, eq(bookings.priceCardId, priceCards.id))
+      .leftJoin(addresses, eq(bookings.addressId, addresses.id))
+      .leftJoin(users, eq(bookings.customerId, users.id))
       .where(and(...conditions))
       .orderBy(desc(bookings.scheduledAt));
+    
+    return results.map(r => ({ ...r.booking, priceCard: r.priceCard, address: r.address, customer: r.customer }));
   }
 
   async createBooking(booking: InsertBooking & { bookingRef: string; subtotal: number; tax: number; total: number }): Promise<Booking> {

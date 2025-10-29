@@ -306,6 +306,8 @@ export const bookings = pgTable("bookings", {
 export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,
   bookingRef: true,
+  providerId: true,
+  durationMinutes: true,
   subtotal: true,
   tax: true,
   total: true,
@@ -314,11 +316,7 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   updatedAt: true,
 }).extend({
   scheduledAt: z.string().or(z.date()),
-  durationMinutes: z.number().min(15, "Duration must be at least 15 minutes"),
-  addOns: z.array(z.object({
-    name: z.string(),
-    price: z.number().min(0)
-  })).default([]),
+  addOnNames: z.array(z.string()).default([]),
 });
 
 export type InsertBooking = z.infer<typeof insertBookingSchema>;

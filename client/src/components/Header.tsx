@@ -92,11 +92,37 @@ export default function Header() {
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  {user?.role === 'customer' && (
+                    <>
+                      <DropdownMenuItem onClick={() => setLocation('/instant-browse')} data-testid="link-instant-browse">
+                        Instant Browse
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLocation('/my-bookings')} data-testid="link-my-bookings">
+                        My Bookings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLocation('/my-addresses')} data-testid="link-my-addresses">
+                        My Addresses
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   {user?.role === 'provider' && (
-                    <DropdownMenuItem onClick={() => setLocation('/dashboard/provider')} data-testid="link-dashboard">
-                      <User className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => setLocation('/dashboard/provider')} data-testid="link-dashboard">
+                        <User className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLocation('/provider/price-cards')} data-testid="link-price-cards">
+                        Price Cards
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLocation('/provider/availability')} data-testid="link-availability">
+                        Availability
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLocation('/provider/jobs')} data-testid="link-jobs">
+                        Jobs
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
                   )}
                   {user?.role === 'admin' && (
                     <DropdownMenuItem onClick={() => setLocation('/dashboard/admin')} data-testid="link-admin">
