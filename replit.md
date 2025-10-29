@@ -9,18 +9,20 @@ Hearthora is a professional marketplace platform that enables customers to find 
 ## Recent Changes
 
 **October 29, 2025:**
-- Complete MVP implementation of Hearthora marketplace application
-- Frontend with Home, Providers list, ProviderProfile, ProviderDashboard, Login/Register pages
-- Backend API with session-based authentication, CRUD operations, role-based access control
-- Security: Session regeneration on auth, sameSite cookies, bcrypt password hashing
-- Tested and verified: Complete authentication flow (register → login → logout → login)
+- Complete MVP features: Home, Providers list (with working filters/sort), Provider Profile
+- Database: PostgreSQL with Drizzle ORM, seeded with 5 categories, 5 providers, 7 services
+- Backend: Session-based auth, CRUD operations, role-based access control, all API routes functional
+- Frontend: TanStack Query integration, loading/error/empty states, real-time data fetching
+- Provider Profile: Real provider data, services display, reviews (empty state), functional quote request dialog
+- Security: Session regeneration, sameSite cookies, bcrypt password hashing (salt rounds = 10)
+- Testing: Authentication flow, providers listing filters/sort, category navigation
 
 ## Project Architecture
 
 ### Technology Stack
 - **Frontend:** React, TypeScript, Tailwind CSS, shadcn/ui, Wouter (routing), TanStack Query
 - **Backend:** Node.js, Express, TypeScript
-- **Database:** In-memory storage (MemStorage) with Drizzle ORM schema definitions
+- **Database:** PostgreSQL with Drizzle ORM for persistence
 - **Authentication:** Express-session with bcrypt password hashing
 - **Forms:** react-hook-form + zodResolver with Drizzle insert schemas
 
@@ -91,8 +93,17 @@ Hearthora is a professional marketplace platform that enables customers to find 
 The workflow "Start application" runs `npm run dev` which:
 1. Starts Express server on port 5000
 2. Starts Vite dev server for frontend
-3. Seeds database with 5 categories
+3. Seeds database with 5 categories, 5 providers (with ratings), and 7 services
 4. Serves both frontend and backend on the same port
+
+## Database Seeding
+
+The database is automatically seeded on startup with:
+- **5 Categories:** Tutoring & Education, Home Services, Fitness & Wellness, Music & Arts, Technology
+- **5 Providers:** Sarah Johnson (Tutoring), Michael Chen (Home Services), Emily Rodriguez (Fitness), David Kim (Music), Lisa Patel (Technology)
+- **Provider Ratings:** Realistic ratings (4.6-5.0) and rating counts (38-127 reviews)
+- **7 Services:** Math Tutoring, SAT Prep, Plumbing, Personal Training, Yoga, Piano Lessons, Web Development
+- **Provider Credentials:** All providers have username/email/password (password: "provider123")
 
 ## Testing
 

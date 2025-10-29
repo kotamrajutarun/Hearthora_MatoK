@@ -171,7 +171,81 @@ export async function seedDatabase() {
       });
     }
 
-    console.log('Database seeded with 5 providers and ratings');
+    const services = [
+      {
+        title: 'High School Math Tutoring',
+        description: 'Comprehensive tutoring for algebra, geometry, and calculus. Personalized lesson plans tailored to your learning style.',
+        categoryId: categories[0].id,
+        providerId: createdProviders[0].id,
+        price: 60,
+        mode: 'online' as const,
+        active: true,
+      },
+      {
+        title: 'SAT/ACT Preparation',
+        description: 'Intensive test prep focusing on math and critical reading sections. Proven strategies to boost your score.',
+        categoryId: categories[0].id,
+        providerId: createdProviders[0].id,
+        price: 75,
+        mode: 'in-person' as const,
+        city: 'New York',
+        active: true,
+      },
+      {
+        title: 'Residential Plumbing Services',
+        description: 'Expert plumbing services for your home. From leaks to installations, we handle it all.',
+        categoryId: categories[1].id,
+        providerId: createdProviders[1].id,
+        price: 95,
+        mode: 'in-person' as const,
+        city: 'Los Angeles',
+        active: true,
+      },
+      {
+        title: 'Personal Training Sessions',
+        description: 'One-on-one fitness training tailored to your goals. Strength, cardio, and nutrition guidance included.',
+        categoryId: categories[2].id,
+        providerId: createdProviders[2].id,
+        price: 70,
+        mode: 'in-person' as const,
+        city: 'Chicago',
+        active: true,
+      },
+      {
+        title: 'Online Yoga Classes',
+        description: 'Live online yoga sessions for all levels. Flexibility, strength, and mindfulness combined.',
+        categoryId: categories[2].id,
+        providerId: createdProviders[2].id,
+        price: 50,
+        mode: 'online' as const,
+        active: true,
+      },
+      {
+        title: 'Piano Lessons',
+        description: 'Learn piano from beginner to advanced. Classical and contemporary styles covered.',
+        categoryId: categories[3].id,
+        providerId: createdProviders[3].id,
+        price: 65,
+        mode: 'in-person' as const,
+        city: 'Houston',
+        active: true,
+      },
+      {
+        title: 'Web Development Course',
+        description: 'Complete web development training. HTML, CSS, JavaScript, React, and Node.js.',
+        categoryId: categories[4].id,
+        providerId: createdProviders[4].id,
+        price: 85,
+        mode: 'online' as const,
+        active: true,
+      },
+    ];
+
+    for (const service of services) {
+      await storage.createService(service);
+    }
+
+    console.log('Database seeded with 5 providers, ratings, and 7 services');
   } catch (error) {
     console.error('Error seeding database:', error);
   }
