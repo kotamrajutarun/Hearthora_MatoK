@@ -16,17 +16,13 @@ export function Footer() {
             <h4 className="font-medium mb-4">Browse</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/providers">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-providers">
-                    All Providers
-                  </a>
+                <Link href="/providers" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-providers">
+                  All Providers
                 </Link>
               </li>
               <li>
-                <Link href="/">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-categories">
-                    Categories
-                  </a>
+                <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-categories">
+                  Categories
                 </Link>
               </li>
               <li>
@@ -41,17 +37,13 @@ export function Footer() {
             <h4 className="font-medium mb-4">For Providers</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/register">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-become-provider">
-                    Become a Provider
-                  </a>
+                <Link href="/register" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-become-provider">
+                  Become a Provider
                 </Link>
               </li>
               <li>
-                <Link href="/login">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-provider-login">
-                    Provider Login
-                  </a>
+                <Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-footer-provider-login">
+                  Provider Login
                 </Link>
               </li>
               <li>

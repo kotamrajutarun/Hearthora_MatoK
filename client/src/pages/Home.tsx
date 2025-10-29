@@ -120,9 +120,8 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
               {categories?.map((category) => (
-                <Link key={category.id} href={`/providers?category=${category.id}`}>
-                  <a>
-                    <Card className="p-6 text-center hover-elevate active-elevate-2 transition-all cursor-pointer" data-testid={`card-category-${category.id}`}>
+                <Link key={category.id} href={`/providers?category=${category.id}`} className="block">
+                  <Card className="p-6 text-center hover-elevate active-elevate-2 transition-all cursor-pointer" data-testid={`card-category-${category.id}`}>
                       <div className="flex justify-center mb-4">
                         <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
                           {categoryIcons[category.id.toString()] && (
@@ -132,7 +131,6 @@ export default function Home() {
                       </div>
                       <h3 className="font-medium text-sm md:text-base">{category.name}</h3>
                     </Card>
-                  </a>
                 </Link>
               ))}
             </div>
@@ -195,11 +193,9 @@ export default function Home() {
               Join thousands of satisfied customers who found the right professional for their needs
             </p>
             <Link href="/providers">
-              <a>
-                <Button size="lg" variant="secondary" className="h-12 px-8" data-testid="button-cta-browse">
-                  Browse Providers
-                </Button>
-              </a>
+              <Button size="lg" variant="secondary" className="h-12 px-8" data-testid="button-cta-browse">
+                Browse Providers
+              </Button>
             </Link>
           </div>
         </div>

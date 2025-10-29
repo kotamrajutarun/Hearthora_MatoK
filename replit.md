@@ -8,7 +8,14 @@ Hearthora is a professional marketplace platform that enables customers to find 
 
 ## Recent Changes
 
-**October 29, 2025:**
+**October 29, 2025 - UrbanPro Replica Project:**
+- **Task 1 (COMPLETE):** Design System & Tokens - Implemented UrbanPro color palette (primary blue #0073E6/HSL 211 100% 45%, success green, warning orange, star gold), updated index.css with proper Tailwind tokens for both light and dark modes
+- **Task 2 (COMPLETE):** Header/Navigation Component - Replicated UrbanPro header with all navigation links (Browse Providers, Ask & Answer, Success Stories, Paid Courses, Free Classes, Tuition Fees, Write Review, All Categories, Help, Login), UrbanPro CTAs ("Post Learning Need" orange button, "Signup as Tutor" blue outline), sticky header with backdrop blur, mobile responsive hamburger menu
+- Created Placeholder component and 7 new routes for UrbanPro navigation items (/ask-answer, /success-stories, /paid-courses, /free-classes, /tuition-fees, /write-review, /help)
+- Bug fixes: Fixed nested anchor tag issues in Header, Home, Footer components; fixed LSP type errors (SelectCategory → Category)
+- Design guidelines documented in design_guidelines.md with UrbanPro specifications
+
+**Previous (MVP):**
 - Complete MVP features: Home, Providers list (with working filters/sort), Provider Profile
 - Database: PostgreSQL with Drizzle ORM, seeded with 5 categories, 5 providers, 7 services
 - Backend: Session-based auth, CRUD operations, role-based access control, all API routes functional
@@ -51,6 +58,7 @@ Hearthora is a professional marketplace platform that enables customers to find 
 - **Provider Dashboard (/dashboard/provider)** - Manage profile, services, inquiries, reviews
 - **Login (/login)** - User authentication
 - **Register (/register)** - New user registration (customer or provider role)
+- **Placeholder Pages** - Ask & Answer, Success Stories, Paid Courses, Free Classes, Tuition Fees, Write Review, Help (coming soon pages with navigation back to home)
 
 ## User Preferences
 
