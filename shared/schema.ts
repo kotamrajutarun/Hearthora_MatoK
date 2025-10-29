@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, doublePrecision, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -181,3 +181,145 @@ export const registerFormSchema = insertUserSchema.extend({
 });
 
 export type RegisterFormInput = z.infer<typeof registerFormSchema>;
+
+// ============= PRICE CARD TABLE (Jiffy-style fixed-price catalog) =============
+export const priceCards = pgTable("price_cards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  providerId: varchar("provider_id").notNull(),
+  serviceId: varchar("service_id"),
+  title: text("title").notNull(),
+  category: text("category").notNull(),
+  city: text("city"),
+  description: text("description").notNull(),
+  basePrice: integer("base_price").notNull(),
+  addOns: jsonb("add_ons").$type<Array<{ name: string; price: number }>>().notNull().default(sql`'[]'::jsonb`),
+  durationMinutes: integer("duration_minutes").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const insertPriceCardSchema = createInsertSchema(priceCards).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  category: z.string().min(1, "Category is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  basePrice: z.number().min(0, "Price must be positive"),
+  durationMinutes: z.number().min(15, "Duration must be at least 15 minutes"),
+  addOns: z.array(z.object({
+    name: z.string(),
+    price: z.number().min(0)
+  })).default([]),
+});
+
+export type InsertPriceCard = z.infer<typeof insertPriceCardSchema>;
+export type PriceCard = typeof priceCards.$inferSelect;
+
+// ============= AVAILABILITY TABLE (Provider schedules) =============
+export const availability = pgTable("availability", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  providerId: varchar("provider_id").notNull().unique(),
+  weekly: jsonb("weekly").$type<Array<{ 
+    day: number; 
+    slots: Array<{ start: string; end: string }> 
+  }>>().notNull().default(sql`'[]'::jsonb`),
+  exceptions: jsonb("exceptions").$type<Array<{ 
+    date: string; 
+    slots: Array<{ start: string; end: string }> 
+  }>>().notNull().default(sql`'[]'::jsonb`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+});
+
+export const insertAvailabilitySchema = createInsertSchema(availability).omit({
+  id: true,
+  updatedAt: true,
+}).extend({
+  weekly: z.array(z.object({
+    day: z.number().min(0).max(6),
+    slots: z.array(z.object({
+      start: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:mm format"),
+      end: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:mm format")
+    }))
+  })).default([]),
+  exceptions: z.array(z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+    slots: z.array(z.object({
+      start: z.string(),
+      end: z.string()
+    }))
+  })).default([]),
+});
+
+export type InsertAvailability = z.infer<typeof insertAvailabilitySchema>;
+export type Availability = typeof availability.$inferSelect;
+
+// ============= ADDRESS TABLE (User delivery addresses) =============
+export const addresses = pgTable("addresses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  label: text("label").notNull(),
+  line1: text("line1").notNull(),
+  line2: text("line2"),
+  city: text("city").notNull(),
+  postalCode: text("postal_code").notNull(),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const insertAddressSchema = createInsertSchema(addresses).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  label: z.string().min(1, "Label is required"),
+  line1: z.string().min(5, "Address line 1 is required"),
+  city: z.string().min(1, "City is required"),
+  postalCode: z.string().min(3, "Postal code is required"),
+});
+
+export type InsertAddress = z.infer<typeof insertAddressSchema>;
+export type Address = typeof addresses.$inferSelect;
+
+// ============= BOOKING TABLE (Jiffy-style instant bookings) =============
+export const bookings = pgTable("bookings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingRef: varchar("booking_ref", { length: 10 }).notNull().unique(),
+  customerId: varchar("customer_id").notNull(),
+  providerId: varchar("provider_id").notNull(),
+  priceCardId: varchar("price_card_id").notNull(),
+  addressId: varchar("address_id").notNull(),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  addOns: jsonb("add_ons").$type<Array<{ name: string; price: number }>>().notNull().default(sql`'[]'::jsonb`),
+  subtotal: integer("subtotal").notNull(),
+  tax: integer("tax").notNull().default(0),
+  total: integer("total").notNull(),
+  currency: text("currency").notNull().default("CAD"),
+  status: text("status").notNull().$type<"pending" | "accepted" | "declined" | "cancelled" | "in_progress" | "completed">().default("pending"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+});
+
+export const insertBookingSchema = createInsertSchema(bookings).omit({
+  id: true,
+  bookingRef: true,
+  subtotal: true,
+  tax: true,
+  total: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  scheduledAt: z.string().or(z.date()),
+  durationMinutes: z.number().min(15, "Duration must be at least 15 minutes"),
+  addOns: z.array(z.object({
+    name: z.string(),
+    price: z.number().min(0)
+  })).default([]),
+});
+
+export type InsertBooking = z.infer<typeof insertBookingSchema>;
+export type Booking = typeof bookings.$inferSelect;

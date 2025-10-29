@@ -1,0 +1,168 @@
+Add “Jiffy-style” features to the existing UrbanPro-like Hearthora project you just generated. Keep all previous code; extend it with instant booking, fixed-price tasks, time slots, provider availability, and a simple accept/decline workflow.
+
+GOALS
+- Keep existing UrbanPro lead/quote/chat flows.
+- Add Jiffy-style flows: browse fixed-price tasks → pick time slot → instant booking → provider accepts/declines → job status updates → complete → review.
+- Do NOT remove existing endpoints. Only add new models, controllers, routes, and React pages/components.
+
+BACKEND (Express + MongoDB)
+1) Models (create in /server/models):
+   a) PriceCard.js (fixed-price catalog item)
+      - fields: providerId(ref User), serviceId(ref Service, optional), title (String, req), category (String, req), city(String), description(String), basePrice(Number, req), addOns:[{ name:String, price:Number }], durationMinutes:Number (req), isActive:Boolean (default:true)
+      - indexes: {category, city, isActive}
+
+   b) Availability.js (provider availability)
+      - fields: providerId(ref User), weekly:[{ day: Number(0-6), slots:[{ start:String("HH:mm"), end:String("HH:mm") }] }], exceptions:[{ date:String("YYYY-MM-DD"), slots:[{ start,end }] }]
+      - helper method to compute next N available slots
+
+   c) Address.js
+      - fields: userId(ref User), label:String, line1:String, line2:String, city:String, postalCode:String, lat:Number, lng:Number, isDefault:Boolean
+
+   d) Booking.js (Jiffy-style job)
+      - fields: bookingRef:String(unique, short id), customerId(ref User,req), providerId(ref User,req), priceCardId(ref PriceCard,req)
+               addressId(ref Address,req), scheduledAt:Date (start time), durationMinutes:Number
+               addOns:[{ name:String, price:Number }]
+               subtotal:Number, tax:Number, total:Number, currency:String(default:"CAD")
+               status: 'pending'|'accepted'|'declined'|'cancelled'|'in_progress'|'completed' (default:'pending')
+               notes:String
+      - timestamps; index on {providerId, status, scheduledAt}
+
+2) Controllers (create in /server/controllers):
+   - priceCardController.js:
+     * createPriceCard (provider)
+     * updatePriceCard (owner)
+     * deletePriceCard (owner)
+     * listMyPriceCards (provider)
+     * publicPriceCards (filter by category, city, q)
+
+   - availabilityController.js:
+     * setWeeklyAvailability (provider)
+     * getMyAvailability (provider)
+     * getProviderAvailabilityPublic(providerId, fromDate, days) → compute slots using weekly + exceptions
+
+   - addressController.js:
+     * addAddress (auth user)
+     * listAddresses (auth user)
+     * setDefaultAddress (auth user)
+     * deleteAddress (auth user)
+
+   - bookingController.js:
+     * createBooking (customer): inputs { priceCardId, scheduledAt(ISO), addOnNames[], addressId, notes }
+       - validate provider is approved, slot is plausible, compute totals (subtotal + tax=0 placeholder), create Booking with status='pending'
+     * providerRespond (provider): accept/decline pending booking (set status accordingly)
+     * startJob (provider): set status 'in_progress' if accepted and time reached
+     * completeJob (provider or customer confirm): set status 'completed'
+     * cancelBooking (customer before accepted OR admin anytime): set status 'cancelled'
+     * getMyBookings (role-aware): if customer → their bookings; if provider → their jobs
+     * getBookingByRef (auth): return by bookingRef
+     * computeQuotePreview (auth): returns priced breakdown for a given priceCard + addOns before booking
+
+3) Routes (create in /server/routes, mount under /api):
+   - /api/price-cards
+     POST /        (provider)         -> createPriceCard
+     GET  /mine    (provider)         -> listMyPriceCards
+     PUT  /:id     (provider owner)   -> updatePriceCard
+     DELETE /:id   (provider owner)   -> deletePriceCard
+     GET  /public  (any)              -> publicPriceCards?category=&city=&q=
+
+   - /api/availability
+     POST /weekly          (provider) -> setWeeklyAvailability
+     GET  /mine            (provider) -> getMyAvailability
+     GET  /public/:pid     (any)      -> getProviderAvailabilityPublic?from=&days=
+
+   - /api/addresses
+     POST /           (auth) -> addAddress
+     GET  /           (auth) -> listAddresses
+     PUT  /:id/default(auth) -> setDefaultAddress
+     DELETE /:id      (auth) -> deleteAddress
+
+   - /api/bookings
+     POST /                        (customer) -> createBooking
+     GET  /mine                    (auth)     -> getMyBookings
+     GET  /ref/:bookingRef         (auth)     -> getBookingByRef
+     POST /preview                 (auth)     -> computeQuotePreview
+     PUT  /:id/provider-respond    (provider) -> providerRespond { action:'accept'|'decline' }
+     PUT  /:id/start               (provider) -> startJob
+     PUT  /:id/complete            (provider or customer) -> completeJob
+     PUT  /:id/cancel              (customer or admin) -> cancelBooking
+
+4) server/server.js updates:
+   - Mount the new routes.
+   - Socket.IO: create a "booking:<providerId>" room and emit events: booking.created, booking.accepted, booking.declined, booking.cancelled, booking.started, booking.completed to relevant users.
+   - Keep existing chat sockets intact.
+
+5) Validation & security:
+   - roleGuard('provider') for provider endpoints, roleGuard('customer') for createBooking.
+   - Never expose passwordHash.
+   - Ensure provider.isApproved === true for public price-cards and booking.
+
+FRONTEND (React + Tailwind)
+1) New pages (in /client/src/pages):
+   - Customer/InstantBrowse.jsx
+     * Filters: category, city, q
+     * Fetch: GET /api/price-cards/public
+     * Card shows title, description, basePrice, duration, provider name, “View Slots”
+     * Clicking card opens drawer/modal with provider availability (GET /api/availability/public/:providerId?from=&days=14), select date/time, choose add-ons, pick address, “Book Now” -> POST /api/bookings
+
+   - Customer/Addresses.jsx
+     * CRUD for addresses using /api/addresses
+
+   - Customer/MyBookings.jsx
+     * List bookings with status chips; open detail view by bookingRef; allow cancel if pending
+
+   - Provider/PriceCards.jsx
+     * CRUD UI for price cards
+
+   - Provider/Availability.jsx
+     * Weekly availability builder: per day (Mon–Sun) list of time-slot rows {start,end}; save to /api/availability/weekly
+
+   - Provider/Jobs.jsx
+     * Tabs: Pending | Accepted | In Progress | Completed
+     * Buttons:
+       - Pending: Accept / Decline → PUT /api/bookings/:id/provider-respond
+       - Accepted (when time reached): Start Job → PUT /:id/start
+       - In Progress: Complete → PUT /:id/complete
+
+   - Booking/Detail.jsx
+     * Shows booking summary, provider, time, address, add-ons, totals; if status allows, show action buttons.
+
+2) Navbar updates:
+   - If role=customer: links to Instant Browse, Addresses, My Bookings
+   - If role=provider: links to Price Cards, Availability, Jobs
+   - Keep existing links (Leads, Quotes, Messages)
+
+3) Components (in /client/src/components):
+   - PriceCardTile.jsx (title, basePrice, duration, provider, CTA)
+   - SlotPicker.jsx (calendar-like day list + available slots for selected day)
+   - AddressPicker.jsx (list default + manage link)
+   - StatusBadge.jsx
+   - Money.jsx (formats currency)
+   - ConfirmDialog.jsx
+
+4) Hooks/utils:
+   - Extend src/utils/api.js with the new endpoints.
+   - src/hooks/useAvailability.js → fetch provider slots window
+   - src/hooks/useBooking.js → preview pricing, create booking, list bookings
+
+5) Socket behavior:
+   - When a booking is created for a provider, show toast in Provider/Jobs (subscribe to room 'booking:<providerId>').
+   - On accept/decline/update, push real-time status changes to customer MyBookings and Booking/Detail.
+
+6) Simple pricing:
+   - subtotal = basePrice + sum(addOns.price)
+   - tax = 0 (placeholder; leave TODO comment for future tax logic)
+   - total = subtotal + tax
+   - currency “CAD”
+
+7) Access rules:
+   - Only approved providers’ price cards appear in public browse.
+   - Prevent double-booking in UI by disabling past slots and adding a basic “slot already taken” server check placeholder (assume single booking per slot per provider).
+
+MIGRATION/SEED (optional):
+- Add /server/seed_jiffy.js to create sample price cards, availability for existing approved providers, and 1–2 demo bookings.
+
+ACCEPTANCE (must work after codegen):
+- Customer can browse fixed-price tasks, see slots, pick address, and create an instant booking (status=pending).
+- Provider sees pending jobs and can Accept/Decline. Status updates in real-time to the customer.
+- Provider can Start and Complete a job; customer sees final status and can still use existing review flow (after completion).
+- All existing UrbanPro features (inquiries/quotes/chat) still function.
