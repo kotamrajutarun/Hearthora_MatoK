@@ -53,31 +53,29 @@ export default function Register() {
 
   const onSubmit = async (data: RegisterFormInput) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      });
 
-      const mockUser = {
-        id: '1',
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        passwordHash: '',
-        role: data.role,
-        skills: [],
-        ratingAvg: 0,
-        ratingCount: 0,
-        createdAt: new Date(),
-      };
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Registration failed');
+      }
 
-      login(mockUser);
+      const user = await response.json();
+      login(user);
       toast({
         title: 'Success',
         description: 'Your account has been created successfully.',
       });
       setLocation('/');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to create account. Please try again.',
+        description: error.message || 'Failed to create account. Please try again.',
         variant: 'destructive',
       });
     }

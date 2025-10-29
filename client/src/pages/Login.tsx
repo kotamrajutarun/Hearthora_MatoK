@@ -31,31 +31,29 @@ export default function Login() {
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockUser = {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: data.email,
-        passwordHash: '',
-        role: 'customer' as const,
-        skills: [],
-        ratingAvg: 0,
-        ratingCount: 0,
-        createdAt: new Date(),
-      };
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      });
 
-      login(mockUser);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
+      }
+
+      const user = await response.json();
+      login(user);
       toast({
         title: 'Success',
         description: 'You have successfully logged in.',
       });
       setLocation('/');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Invalid email or password.',
+        description: error.message || 'Invalid email or password.',
         variant: 'destructive',
       });
     }
