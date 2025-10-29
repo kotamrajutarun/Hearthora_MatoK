@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Search, MapPin } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import type { SelectCategory } from '@shared/schema';
+import type { Category } from '@shared/schema';
 import heroImage from '@assets/generated_images/Marketplace_hero_with_service_providers_2fc3d64c.png';
 import educationIcon from '@assets/generated_images/Education_tutoring_category_icon_b62ff152.png';
 import homeIcon from '@assets/generated_images/Home_services_category_icon_f2e65835.png';
@@ -25,7 +25,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
 
-  const { data: categories, isLoading: categoriesLoading } = useQuery<SelectCategory[]>({
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
 
