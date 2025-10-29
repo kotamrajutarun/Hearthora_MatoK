@@ -6,6 +6,10 @@ import {
   inquiries,
   messages,
   reviews,
+  priceCards,
+  availability,
+  addresses,
+  bookings,
   type User, 
   type InsertUser,
   type Category,
@@ -19,7 +23,15 @@ import {
   type Message,
   type InsertMessage,
   type Review,
-  type InsertReview
+  type InsertReview,
+  type PriceCard,
+  type InsertPriceCard,
+  type Availability,
+  type InsertAvailability,
+  type Address,
+  type InsertAddress,
+  type Booking,
+  type InsertBooking
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, like, desc } from "drizzle-orm";
@@ -84,6 +96,41 @@ export interface IStorage {
   getReviewsByCustomerId(customerId: string): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
   updateReview(id: string, updates: Partial<Review>): Promise<Review | undefined>;
+  
+  // Price Card methods (Jiffy-style)
+  getPriceCard(id: string): Promise<PriceCard | undefined>;
+  getPriceCardsByProviderId(providerId: string): Promise<PriceCard[]>;
+  getPublicPriceCards(filters?: {
+    category?: string;
+    city?: string;
+    search?: string;
+  }): Promise<PriceCard[]>;
+  createPriceCard(priceCard: InsertPriceCard): Promise<PriceCard>;
+  updatePriceCard(id: string, updates: Partial<PriceCard>): Promise<PriceCard | undefined>;
+  deletePriceCard(id: string): Promise<boolean>;
+  
+  // Availability methods
+  getAvailability(id: string): Promise<Availability | undefined>;
+  getAvailabilityByProviderId(providerId: string): Promise<Availability | undefined>;
+  setAvailability(availability: InsertAvailability): Promise<Availability>;
+  updateAvailability(providerId: string, updates: Partial<Availability>): Promise<Availability | undefined>;
+  
+  // Address methods
+  getAddress(id: string): Promise<Address | undefined>;
+  getAddressesByUserId(userId: string): Promise<Address[]>;
+  getDefaultAddress(userId: string): Promise<Address | undefined>;
+  createAddress(address: InsertAddress): Promise<Address>;
+  updateAddress(id: string, updates: Partial<Address>): Promise<Address | undefined>;
+  setDefaultAddress(userId: string, addressId: string): Promise<Address | undefined>;
+  deleteAddress(id: string): Promise<boolean>;
+  
+  // Booking methods
+  getBooking(id: string): Promise<Booking | undefined>;
+  getBookingByRef(bookingRef: string): Promise<Booking | undefined>;
+  getBookingsByCustomerId(customerId: string): Promise<Booking[]>;
+  getBookingsByProviderId(providerId: string, filters?: { status?: string }): Promise<Booking[]>;
+  createBooking(booking: InsertBooking & { bookingRef: string; subtotal: number; tax: number; total: number }): Promise<Booking>;
+  updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -411,6 +458,236 @@ export class DatabaseStorage implements IStorage {
       });
     }
     
+    return updated || undefined;
+  }
+
+  // Price Card methods (Jiffy-style)
+  async getPriceCard(id: string): Promise<PriceCard | undefined> {
+    const [priceCard] = await db.select().from(priceCards).where(eq(priceCards.id, id));
+    return priceCard || undefined;
+  }
+
+  async getPriceCardsByProviderId(providerId: string): Promise<PriceCard[]> {
+    return await db
+      .select()
+      .from(priceCards)
+      .where(eq(priceCards.providerId, providerId))
+      .orderBy(desc(priceCards.createdAt));
+  }
+
+  async getPublicPriceCards(filters?: {
+    category?: string;
+    city?: string;
+    search?: string;
+  }): Promise<PriceCard[]> {
+    const conditions = [eq(priceCards.isActive, true)];
+    
+    if (filters?.category) {
+      conditions.push(eq(priceCards.category, filters.category));
+    }
+    if (filters?.city) {
+      conditions.push(like(priceCards.city, `%${filters.city}%`));
+    }
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        like(priceCards.title, searchTerm)
+      );
+    }
+    
+    return await db
+      .select()
+      .from(priceCards)
+      .where(and(...conditions))
+      .orderBy(priceCards.title);
+  }
+
+  async createPriceCard(insertPriceCard: InsertPriceCard): Promise<PriceCard> {
+    const [priceCard] = await db
+      .insert(priceCards)
+      .values(insertPriceCard)
+      .returning();
+    return priceCard;
+  }
+
+  async updatePriceCard(id: string, updates: Partial<PriceCard>): Promise<PriceCard | undefined> {
+    const [updated] = await db
+      .update(priceCards)
+      .set(updates)
+      .where(eq(priceCards.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePriceCard(id: string): Promise<boolean> {
+    const result = await db.delete(priceCards).where(eq(priceCards.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Availability methods
+  async getAvailability(id: string): Promise<Availability | undefined> {
+    const [avail] = await db.select().from(availability).where(eq(availability.id, id));
+    return avail || undefined;
+  }
+
+  async getAvailabilityByProviderId(providerId: string): Promise<Availability | undefined> {
+    const [avail] = await db.select().from(availability).where(eq(availability.providerId, providerId));
+    return avail || undefined;
+  }
+
+  async setAvailability(insertAvailability: InsertAvailability): Promise<Availability> {
+    const existing = await this.getAvailabilityByProviderId(insertAvailability.providerId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(availability)
+        .set({
+          weekly: insertAvailability.weekly,
+          exceptions: insertAvailability.exceptions,
+          updatedAt: new Date()
+        })
+        .where(eq(availability.providerId, insertAvailability.providerId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(availability)
+        .values({
+          ...insertAvailability,
+          updatedAt: new Date()
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async updateAvailability(providerId: string, updates: Partial<Availability>): Promise<Availability | undefined> {
+    const [updated] = await db
+      .update(availability)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(availability.providerId, providerId))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Address methods
+  async getAddress(id: string): Promise<Address | undefined> {
+    const [address] = await db.select().from(addresses).where(eq(addresses.id, id));
+    return address || undefined;
+  }
+
+  async getAddressesByUserId(userId: string): Promise<Address[]> {
+    return await db
+      .select()
+      .from(addresses)
+      .where(eq(addresses.userId, userId))
+      .orderBy(desc(addresses.isDefault), desc(addresses.createdAt));
+  }
+
+  async getDefaultAddress(userId: string): Promise<Address | undefined> {
+    const [address] = await db
+      .select()
+      .from(addresses)
+      .where(and(eq(addresses.userId, userId), eq(addresses.isDefault, true)));
+    return address || undefined;
+  }
+
+  async createAddress(insertAddress: InsertAddress): Promise<Address> {
+    const [address] = await db
+      .insert(addresses)
+      .values({
+        ...insertAddress,
+        createdAt: new Date()
+      })
+      .returning();
+    return address;
+  }
+
+  async updateAddress(id: string, updates: Partial<Address>): Promise<Address | undefined> {
+    const [updated] = await db
+      .update(addresses)
+      .set(updates)
+      .where(eq(addresses.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async setDefaultAddress(userId: string, addressId: string): Promise<Address | undefined> {
+    await db
+      .update(addresses)
+      .set({ isDefault: false })
+      .where(eq(addresses.userId, userId));
+    
+    const [updated] = await db
+      .update(addresses)
+      .set({ isDefault: true })
+      .where(and(eq(addresses.id, addressId), eq(addresses.userId, userId)))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  async deleteAddress(id: string): Promise<boolean> {
+    const result = await db.delete(addresses).where(eq(addresses.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Booking methods
+  async getBooking(id: string): Promise<Booking | undefined> {
+    const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
+    return booking || undefined;
+  }
+
+  async getBookingByRef(bookingRef: string): Promise<Booking | undefined> {
+    const [booking] = await db.select().from(bookings).where(eq(bookings.bookingRef, bookingRef));
+    return booking || undefined;
+  }
+
+  async getBookingsByCustomerId(customerId: string): Promise<Booking[]> {
+    return await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.customerId, customerId))
+      .orderBy(desc(bookings.createdAt));
+  }
+
+  async getBookingsByProviderId(providerId: string, filters?: { status?: string }): Promise<Booking[]> {
+    const conditions = [eq(bookings.providerId, providerId)];
+    
+    if (filters?.status) {
+      conditions.push(eq(bookings.status, filters.status as any));
+    }
+    
+    return await db
+      .select()
+      .from(bookings)
+      .where(and(...conditions))
+      .orderBy(desc(bookings.scheduledAt));
+  }
+
+  async createBooking(booking: InsertBooking & { bookingRef: string; subtotal: number; tax: number; total: number }): Promise<Booking> {
+    const scheduledAt = typeof booking.scheduledAt === 'string' 
+      ? new Date(booking.scheduledAt) 
+      : booking.scheduledAt;
+    
+    const [created] = await db
+      .insert(bookings)
+      .values({
+        ...booking,
+        scheduledAt,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as any)
+      .returning();
+    return created;
+  }
+
+  async updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | undefined> {
+    const [updated] = await db
+      .update(bookings)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(bookings.id, id))
+      .returning();
     return updated || undefined;
   }
 }
