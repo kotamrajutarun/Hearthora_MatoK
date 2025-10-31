@@ -11,7 +11,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   role: text("role").notNull().$type<"customer" | "provider" | "admin">(),
-  photoUrl: text("photo_url"),
+  photoUrl: text("icon_url"),
   username: text("username"),
   categoryId: text("category_id"),
   city: text("city"),
