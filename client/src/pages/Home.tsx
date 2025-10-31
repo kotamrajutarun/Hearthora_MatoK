@@ -8,8 +8,9 @@ import { useState, type KeyboardEvent } from 'react';
 import heroImage from '@assets/generated_images/Marketplace_hero_with_service_providers_2fc3d64c.png';
 // --- helpers just for icon path handling ---
 function buildIconSrc(cat: Category): string {
-  // Construct path using ID + name to match file naming convention (e.g., CAT001 Cleaning & Deep Clean.png)
-  let raw = `/icons/categories/${cat.id} ${cat.name}.png`;
+  // Use icon_url from database if available, otherwise construct path using category name
+  // Files are named like "Music & Dance Classes.png" (without ID prefix)
+  let raw = cat.icon_url || `/icons/categories/${cat.name}.png`;
   // ensure it starts at public root
   if (!raw.startsWith('/')) raw = '/' + raw;
   // encode spaces & special chars
