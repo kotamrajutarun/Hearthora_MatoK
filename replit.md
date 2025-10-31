@@ -12,12 +12,13 @@ Hearthora is a professional marketplace platform that enables customers to find 
 - **Schema:** Added optional `icon_url` field to categories table for explicit icon paths
 - **Icon Path Resolution:** Updated to use category name-based paths (matching actual file naming)
 - **UI Enhancements:**
-  - Fixed uniform height (160px) for all category cards
+  - Fixed uniform height (180px) for all category cards with proper text wrapping
   - Changed icon background from grey to light primary color (`bg-primary/10`) with subtle border
   - Increased icon sizes (80px container, 56px icons) for better visibility
-  - Added text line-clamping to prevent overflow
+  - Optimized layout spacing (p-4, top-aligned flex) to ensure full category names display
+  - Added text line-clamping with 2-line support for complete name display
   - Updated loading skeleton to match new card dimensions
-- **Testing:** Verified category grid display and navigation to provider filters
+- **Testing:** Verified category grid display, full name visibility, and navigation to provider filters
 
 **October 29, 2025 - Jiffy Instant Booking Integration (COMPLETE):**
 - **Backend:** Complete - 23 Jiffy storage methods, 19 API endpoints with security validations

@@ -100,8 +100,8 @@ export default function Home() {
           {categoriesLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
               {[1, 2, 3, 4, 5].map((i) => (
-                <Card key={i} className="p-6 text-center h-[160px] flex flex-col items-center justify-center">
-                  <div className="flex justify-center mb-4">
+                <Card key={i} className="p-4 text-center h-[180px] flex flex-col items-center">
+                  <div className="flex justify-center mb-3 flex-shrink-0">
                     <div className="h-20 w-20 rounded-full bg-muted animate-pulse"></div>
                   </div>
                   <div className="h-4 bg-muted rounded animate-pulse mx-auto w-24"></div>
@@ -114,8 +114,8 @@ export default function Home() {
                 const firstTry = buildIconSrc(category); // ID + name-based path
                 return (
                   <Link key={category.id} href={`/providers?category=${category.id}`} className="block">
-                    <Card className="p-6 text-center hover-elevate active-elevate-2 transition-all cursor-pointer h-[160px] flex flex-col items-center justify-center" data-testid={`card-category-${category.id}`}>
-                      <div className="flex justify-center mb-4">
+                    <Card className="p-4 text-center hover-elevate active-elevate-2 transition-all cursor-pointer h-[180px] flex flex-col items-center" data-testid={`card-category-${category.id}`}>
+                      <div className="flex justify-center mb-3 flex-shrink-0">
                         <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/20">
                           <img
                             src={firstTry}
@@ -150,7 +150,7 @@ export default function Home() {
                           />
                         </div>
                       </div>
-                      <h3 className="font-medium text-sm md:text-base line-clamp-2">{category.name}</h3>
+                      <h3 className="font-medium text-sm md:text-base line-clamp-2 px-2">{category.name}</h3>
                     </Card>
                   </Link>
                 );
