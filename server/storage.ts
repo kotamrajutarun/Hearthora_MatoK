@@ -10,6 +10,7 @@ import {
   availability,
   addresses,
   bookings,
+  bookingMessages,
   type User, 
   type InsertUser,
   type Category,
@@ -31,7 +32,9 @@ import {
   type Address,
   type InsertAddress,
   type Booking,
-  type InsertBooking
+  type InsertBooking,
+  type BookingMessage,
+  type InsertBookingMessage
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, like, desc } from "drizzle-orm";
@@ -41,6 +44,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   
@@ -129,8 +133,13 @@ export interface IStorage {
   getBookingByRef(bookingRef: string): Promise<Booking | undefined>;
   getBookingsByCustomerId(customerId: string): Promise<Booking[]>;
   getBookingsByProviderId(providerId: string, filters?: { status?: string }): Promise<Booking[]>;
+  getAllBookings(): Promise<Booking[]>;
   createBooking(booking: InsertBooking & { bookingRef: string; subtotal: number; tax: number; total: number }): Promise<Booking>;
   updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | undefined>;
+
+  // Booking Message methods
+  getBookingMessages(bookingId: string): Promise<BookingMessage[]>;
+  createBookingMessage(message: InsertBookingMessage): Promise<BookingMessage>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -165,6 +174,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return updated || undefined;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
   // Category methods
@@ -685,6 +698,31 @@ export class DatabaseStorage implements IStorage {
     return results.map(r => ({ ...r.booking, priceCard: r.priceCard, address: r.address, customer: r.customer }));
   }
 
+  async getAllBookings(): Promise<any[]> {
+    const results = await db
+      .select({
+        booking: bookings,
+        priceCard: priceCards,
+        address: addresses,
+        customer: users,
+        provider: providers,
+      })
+      .from(bookings)
+      .leftJoin(priceCards, eq(bookings.priceCardId, priceCards.id))
+      .leftJoin(addresses, eq(bookings.addressId, addresses.id))
+      .leftJoin(users, eq(bookings.customerId, users.id))
+      .leftJoin(providers, eq(bookings.providerId, providers.id))
+      .orderBy(desc(bookings.createdAt));
+    
+    return results.map(r => ({ 
+      ...r.booking, 
+      priceCard: r.priceCard, 
+      address: r.address, 
+      customer: r.customer,
+      provider: r.provider 
+    }));
+  }
+
   async createBooking(booking: InsertBooking & { bookingRef: string; subtotal: number; tax: number; total: number }): Promise<Booking> {
     const scheduledAt = typeof booking.scheduledAt === 'string' 
       ? new Date(booking.scheduledAt) 
@@ -709,6 +747,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bookings.id, id))
       .returning();
     return updated || undefined;
+  }
+
+  // Booking Message methods
+  async getBookingMessages(bookingId: string): Promise<BookingMessage[]> {
+    return await db.select().from(bookingMessages).where(eq(bookingMessages.bookingId, bookingId)).orderBy(bookingMessages.createdAt);
+  }
+
+  async createBookingMessage(insertMessage: InsertBookingMessage): Promise<BookingMessage> {
+    const [message] = await db
+      .insert(bookingMessages)
+      .values(insertMessage)
+      .returning();
+    return message;
   }
 }
 

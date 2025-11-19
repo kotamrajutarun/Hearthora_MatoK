@@ -13,7 +13,8 @@ import {
   insertPriceCardSchema,
   insertAvailabilitySchema,
   insertAddressSchema,
-  insertBookingSchema
+  insertBookingSchema,
+  insertBookingMessageSchema
 } from "@shared/schema";
 
 declare module "express-session" {
@@ -993,6 +994,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Booking messages routes
+  app.get("/api/bookings/:bookingId/messages", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { bookingId } = req.params;
+
+      const booking = await storage.getBooking(bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      const user = await storage.getUser(authReq.userId!);
+      const provider = user?.role === 'provider' ? await storage.getProviderByUserId(authReq.userId!) : null;
+
+      if (booking.customerId !== authReq.userId && booking.providerId !== provider?.id) {
+        return res.status(403).json({ error: "Not authorized to view messages for this booking" });
+      }
+
+      const messages = await storage.getBookingMessages(bookingId);
+      res.json(messages);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/bookings/:bookingId/messages", authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { bookingId } = req.params;
+
+      const booking = await storage.getBooking(bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      const user = await storage.getUser(authReq.userId!);
+      const provider = user?.role === 'provider' ? await storage.getProviderByUserId(authReq.userId!) : null;
+
+      if (booking.customerId !== authReq.userId && booking.providerId !== provider?.id) {
+        return res.status(403).json({ error: "Not authorized to send messages for this booking" });
+      }
+
+      const validatedData = insertBookingMessageSchema.parse({
+        ...req.body,
+        bookingId,
+        senderId: authReq.userId
+      });
+
+      const message = await storage.createBookingMessage(validatedData);
+      res.status(201).json(message);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Admin routes
+  async function adminMiddleware(req: Request, res: Response, next: Function) {
+    const authReq = req as AuthRequest;
+    try {
+      const user = await storage.getUser(authReq.userId!);
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      next();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  app.get("/api/admin/users", authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+      res.json(usersWithoutPasswords);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/providers", authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+    try {
+      const providers = await storage.getAllProviders();
+      res.json(providers);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/bookings", authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+    try {
+      const bookings = await storage.getAllBookings();
+      res.json(bookings);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 

@@ -1,0 +1,84 @@
+You are my Senior Full-Stack Developer and Architect.
+
+Your job: build **MATOK**, a full two-sided service marketplace for Canada, inspired by **UrbanPro + Jiffy**, BUT using **only free tools, free dependencies, and free usage**.
+
+⚠️ IMPORTANT HARD RULES (MUST FOLLOW):
+- Do NOT use any paid APIs (no OpenAI, no paid vector DBs, no paid auth providers).
+- Do NOT integrate Stripe or other paid gateways yet – just create clean stubs/placeholders for future payments.
+- Only use free & open-source tools: React, Vite, Tailwind, Node.js, Express, SQLite/PostgreSQL, etc.
+- Everything must run fully on Replit free tier (or exportable to my local machine) with `npm install` and `npm run dev`.
+
+🎯 PRODUCT VISION (NOT a Yellow Pages Directory):
+Matok is a **marketplace**, NOT just a listing site.
+
+We need:
+
+1) USER FEATURES (Customers):
+- Sign up / log in (email + password auth only, no social login required).
+- Browse and search for services (e.g., tutor, cleaner, fitness trainer, handyman, photographer).
+- Filter providers by:
+  - Category
+  - City/area
+  - Price range
+  - Rating
+  - Availability (day of week / time range)
+- View full provider profile:
+  - Name, photo/avatar
+  - Category & skills
+  - Short bio
+  - Years of experience
+  - Hourly rate or fixed price
+  - City/area
+  - Availability (simple weekly schedule)
+  - Ratings & reviews (stored in DB)
+- Booking flow (without real payments for now):
+  - Choose provider → pick date & time → confirm booking.
+  - Store booking in DB with status: pending, accepted, rejected, completed, cancelled.
+- Simple internal “messages” model:
+  - User can send a message per booking (like a mini chat thread).
+  - Messages stored in DB (no real-time WebSocket needed initially).
+- User dashboard:
+  - Upcoming bookings
+  - Past bookings
+  - Booking status
+  - Links to view provider profile & messages.
+
+2) PROVIDER FEATURES:
+- Provider registration (can be a flag/role on same User table: role = "provider").
+- Provider profile setup page:
+  - Name, profile picture (for now just image URL field).
+  - Short bio.
+  - Skills / tags.
+  - Category (from predefined list).
+  - City/area.
+  - Pricing (hourly or fixed).
+  - Availability (checkboxes for days + time range as text).
+- Provider dashboard:
+  - New booking requests (pending).
+  - Buttons to accept / reject bookings.
+  - List of upcoming confirmed bookings.
+  - Past bookings with status.
+  - Access to message threads per booking.
+  - Simple earnings summary (just a count & total hypothetical amount, no payment integration).
+
+3) ADMIN (CAN BE SIMPLE):
+- Admin role (role = "admin" in same User table).
+- Basic admin page:
+  - See list of providers, approve or deactivate them.
+  - See list of bookings.
+  - See list of users.
+
+4) AI/SMART MATCHING (FREE-ONLY APPROACH):
+- Do NOT call external LLM APIs.
+- Implement a simple “smart matching” algorithm locally:
+  - Sort providers based on:
+    - same city/area,
+    - matching category,
+    - highest rating,
+    - lowest price (prioritize affordable first).
+- Create a “Recommended Providers” section on the search results page based on this logic.
+- Keep AI hooks abstracted: for example, create a function like `getRecommendedProviders(criteria)` that uses local logic now, but I can later plug in an LLM if I want.
+
+5) TECH STACK & STRUCTURE:
+- Frontend: React + Vite + TypeScript + TailwindCSS (all free).
+- Backend: Node.js +

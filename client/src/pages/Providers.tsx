@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Star, MapPin, Filter, DollarSign, Loader2 } from 'lucide-react';
+import { Star, MapPin, Filter, DollarSign, Loader2, Sparkles } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useQuery } from '@tanstack/react-query';
 import type { SelectCategory } from '@shared/schema';
+import { getRecommendedProviders } from '@/lib/smartMatching';
 
 interface Provider {
   id: string;
@@ -82,6 +83,21 @@ export default function Providers() {
     setSortBy('relevance');
     setLocation('/providers');
   };
+
+  // Smart matching: Get recommended providers when filters are applied
+  const recommendedProviders = useMemo(() => {
+    if (!providers || providers.length === 0) return [];
+    
+    // Only show recommendations if user has applied some filters
+    const hasFilters = selectedCategory !== 'all' || city || minRating > 0 || urlSearch;
+    if (!hasFilters) return [];
+
+    return getRecommendedProviders(providers, {
+      city: city || undefined,
+      categoryId: selectedCategory !== 'all' ? selectedCategory : undefined,
+      maxProviders: 6,
+    });
+  }, [providers, selectedCategory, city, minRating, urlSearch]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,6 +195,80 @@ export default function Providers() {
           </aside>
 
           <div className="flex-1">
+            {/* Recommended Providers Section */}
+            {!isLoading && recommendedProviders.length > 0 && (
+              <div className="mb-12">
+                <div className="flex items-center gap-2 mb-6">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <h2 className="text-2xl font-semibold">Recommended for You</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Based on your search criteria, we think you'll love these providers
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {recommendedProviders.slice(0, 3).map((provider) => (
+                    <Link key={provider.id} href={`/provider/${provider.id}`}>
+                      <a>
+                        <Card className="p-6 hover-elevate active-elevate-2 transition-all h-full border-primary/20" data-testid={`card-recommended-${provider.id}`}>
+                          <div className="flex flex-col items-center text-center space-y-4">
+                            <Badge variant="default" className="absolute top-4 right-4">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Recommended
+                            </Badge>
+                            <Avatar className="h-24 w-24">
+                              <AvatarImage src={provider.photoUrl} alt={`${provider.firstName} ${provider.lastName}`} />
+                              <AvatarFallback>{provider.firstName[0]}{provider.lastName[0]}</AvatarFallback>
+                            </Avatar>
+
+                            <div className="space-y-2 w-full">
+                              <h3 className="text-xl font-semibold">
+                                {provider.firstName} {provider.lastName}
+                              </h3>
+
+                              <div className="flex flex-wrap gap-2 justify-center">
+                                {provider.skills.slice(0, 3).map((skill, index) => (
+                                  <Badge key={skill} variant="secondary" className="text-xs">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              </div>
+
+                              <div className="flex items-center justify-center gap-1 text-sm">
+                                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                                <span className="font-semibold">{provider.ratingAvg}</span>
+                                <span className="text-muted-foreground">({provider.ratingCount})</span>
+                              </div>
+
+                              <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4" />
+                                <span>{provider.city}</span>
+                              </div>
+
+                              <div className="flex items-center justify-center gap-1 text-lg font-semibold text-primary">
+                                <DollarSign className="h-5 w-5" />
+                                <span>{provider.hourlyRate}/hr</span>
+                              </div>
+
+                              <p className="text-xs text-muted-foreground">
+                                {provider.experienceYears} years experience
+                              </p>
+                            </div>
+
+                            <Button className="w-full">
+                              View Profile
+                            </Button>
+                          </div>
+                        </Card>
+                      </a>
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-8 border-t pt-8">
+                  <h3 className="text-xl font-semibold mb-4">All Providers</h3>
+                </div>
+              </div>
+            )}
+
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-muted-foreground" data-testid="text-provider-count">
                 {isLoading ? 'Loading...' : `Showing ${providers?.length || 0} ${providers?.length === 1 ? 'provider' : 'providers'}`}

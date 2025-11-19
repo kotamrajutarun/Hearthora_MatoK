@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatMoney } from "@/lib/money";
-import { Calendar, Clock, MapPin, User, FileText } from "lucide-react";
+import { Calendar, Clock, MapPin, User, FileText, DollarSign, TrendingUp, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -136,6 +136,23 @@ export default function Jobs() {
     return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
   }) || [];
 
+  // Calculate earnings summary
+  const earningsSummary = useMemo(() => {
+    if (!bookings) return { totalEarnings: 0, completedCount: 0, pendingEarnings: 0 };
+
+    const completed = bookings.filter(b => b.status === 'completed');
+    const totalEarnings = completed.reduce((sum, b) => sum + b.total, 0);
+    
+    const pending = bookings.filter(b => b.status === 'accepted' || b.status === 'in_progress');
+    const pendingEarnings = pending.reduce((sum, b) => sum + b.total, 0);
+
+    return {
+      totalEarnings,
+      completedCount: completed.length,
+      pendingEarnings,
+    };
+  }, [bookings]);
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div>
@@ -143,6 +160,54 @@ export default function Jobs() {
         <p className="text-muted-foreground mt-2">
           Manage your service bookings
         </p>
+      </div>
+
+      {/* Earnings Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card data-testid="card-total-earnings">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold text-green-600 dark:text-green-500" data-testid="text-total-earnings">
+              {formatMoney(earningsSummary.totalEarnings)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              From {earningsSummary.completedCount} completed {earningsSummary.completedCount === 1 ? 'booking' : 'bookings'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-pending-earnings">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Earnings</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold text-orange-600 dark:text-orange-500" data-testid="text-pending-earnings">
+              {formatMoney(earningsSummary.pendingEarnings)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              From upcoming bookings
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-completed-jobs">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed Jobs</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold" data-testid="text-completed-count">
+              {earningsSummary.completedCount}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Successfully completed
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>

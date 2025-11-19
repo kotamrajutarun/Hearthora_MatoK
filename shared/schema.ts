@@ -321,3 +321,22 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
 
 export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type Booking = typeof bookings.$inferSelect;
+
+// Booking Messages (chat thread per booking)
+export const bookingMessages = pgTable("booking_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull(),
+  senderId: varchar("sender_id").notNull(),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const insertBookingMessageSchema = createInsertSchema(bookingMessages).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  text: z.string().min(1, "Message cannot be empty"),
+});
+
+export type InsertBookingMessage = z.infer<typeof insertBookingMessageSchema>;
+export type BookingMessage = typeof bookingMessages.$inferSelect;

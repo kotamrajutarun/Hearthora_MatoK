@@ -12,6 +12,7 @@ import ProviderProfile from "@/pages/ProviderProfile";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ProviderDashboard from "@/pages/ProviderDashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import InstantBrowse from "@/pages/InstantBrowse";
 import Addresses from "@/pages/Addresses";
 import MyBookings from "@/pages/MyBookings";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard/provider" component={ProviderDashboard} />
+      <Route path="/dashboard/admin" component={AdminDashboard} />
       <Route path="/instant-browse" component={InstantBrowse} />
       <Route path="/my-addresses" component={Addresses} />
       <Route path="/my-bookings" component={MyBookings} />
