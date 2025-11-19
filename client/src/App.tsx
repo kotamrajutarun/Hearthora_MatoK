@@ -11,6 +11,8 @@ import Providers from "@/pages/Providers";
 import ProviderProfile from "@/pages/ProviderProfile";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import CustomerDashboard from "@/pages/CustomerDashboard";
+import InquiryConversation from "@/pages/InquiryConversation";
 import ProviderDashboard from "@/pages/ProviderDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import InstantBrowse from "@/pages/InstantBrowse";
@@ -33,6 +35,8 @@ function Router() {
       <Route path="/provider/:id" component={ProviderProfile} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/dashboard" component={CustomerDashboard} />
+      <Route path="/inquiries/:id" component={InquiryConversation} />
       <Route path="/dashboard/provider" component={ProviderDashboard} />
       <Route path="/dashboard/admin" component={AdminDashboard} />
       <Route path="/instant-browse" component={InstantBrowse} />

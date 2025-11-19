@@ -31,6 +31,7 @@ export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  iconUrl: text("icon_url"),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 

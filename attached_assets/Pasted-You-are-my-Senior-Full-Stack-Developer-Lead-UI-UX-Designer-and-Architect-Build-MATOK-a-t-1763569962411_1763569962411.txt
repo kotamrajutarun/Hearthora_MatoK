@@ -1,0 +1,153 @@
+You are my Senior Full-Stack Developer, Lead UI/UX Designer, and Architect.
+
+Build **MATOK** — a two-sided service marketplace for Canada, combining:
+- Jiffy’s clean on-demand experience,
+- UrbanPro’s professional service marketplace,
+- Airbnb’s premium UI spacing, typography, and polish.
+
+⚠ STRICT RULES (MUST FOLLOW):
+- Use ONLY free tools (no paid APIs, no Stripe yet).
+- DO NOT build a directory, catalog, or Yellow Pages-style site.
+- DO NOT generate cluttered lists with dense text.
+- Every page must look modern, premium, breathable, and elegant.
+- All components must match the visual quality of Jiffy + Airbnb.
+
+==========================================================
+🎨 BRAND & DESIGN GUIDELINES (CRITICAL)
+==========================================================
+Use this exact design system:
+
+COLORS:
+- White (#FFFFFF) – base background
+- Light Gray (#F6F9FC) – section backgrounds
+- Primary Blue (#1D4ED8)
+- Accent Green (#22C55E)
+- Text Black (#111827)
+- Subtle Gray Text (#6B7280)
+
+TYPOGRAPHY:
+- Use Inter or Poppins (Google Fonts)
+- Large bold headings (text-4xl / font-bold)
+- Clean subheadings (text-xl)
+- Highly readable body text (text-base / leading-relaxed)
+
+SPACING & LAYOUT:
+- Massive Airbnb-style spacing
+- Min padding: p-6, ideal p-10 or p-12 for sections
+- Cards = rounded-xl + shadow-lg + hover:shadow-xl
+- Large grid layouts (3 or 4 columns)
+
+ICONOGRAPHY:
+- Use consistent outline icons (Heroicons or Lucide)
+- Category tiles MUST have big icons + clean labels
+- “How it works” = 3 steps with icons
+
+HOMEPAGE STRUCTURE (MUST MATCH JIFFY + AIRBNB):
+1. NAVBAR:
+   - Logo "Matok"
+   - Services | Become a Provider | Login | Register
+
+2. HERO SECTION:
+   - Full-width
+   - Large headline: “Find trusted local pros in Canada”
+   - Subheadline: “Tutors, cleaners, fitness trainers, electricians and more.”
+   - PROMINENT search bar (service + location)
+   - Large, premium illustration or icon set
+
+3. CATEGORY GRID (Premium tiles):
+   - 8–12 service categories (Tutor, Cleaner, Fitness, Handyman, etc.)
+   - 3 or 4-column grid
+   - Each tile: icon + label + hover animation
+
+4. HOW IT WORKS SECTION:
+   - 3 or 4 steps
+   - Icons + short text
+   - Airbnb spacing
+
+5. FEATURED PROVIDERS (Jiffy-style cards):
+   - Rounded-xl
+   - Photo, name, skills, rating, price
+   - “View Profile” CTA
+
+6. TESTIMONIALS
+   - 3 cards with real-looking review text
+
+7. FOOTER
+   - Clean links + logo + “© Matok 2025”
+
+==========================================================
+🧩 CORE PRODUCT FUNCTIONALITY (NO COMPROMISES)
+==========================================================
+
+USERS (Customers):
+- Register/login with email/password only.
+- Browse categories → search providers → filter (location, price, rating).
+- View provider profile (bio, skills, pricing, availability, ratings).
+- Book provider → choose date/time → confirm.
+- Send messages inside booking (simple message thread in DB).
+- User Dashboard:
+  - Upcoming bookings
+  - Past bookings
+  - Messages
+  - Cancel booking
+- Simple rating/review after job completion.
+
+PROVIDERS:
+- Register → complete profile (photo URL, skills, pricing, city, bio, availability).
+- Provider Dashboard:
+  - New booking requests (pending)
+  - Accept / reject
+  - Upcoming bookings
+  - Messages per booking
+  - Profile editing
+  - Earnings summary (mock totals, no payments yet)
+
+ADMIN:
+- role = "admin" in user table
+- Pages to:
+  - Approve providers
+  - View users, providers, bookings (read-only)
+  - Activate/deactivate providers
+
+==========================================================
+🛠 TECH STACK (FREE ONLY)
+==========================================================
+FRONTEND:
+- React + Vite + TypeScript + TailwindCSS
+- React Router
+- Clean component structure
+- Use Tailwind utilities for Airbnb-style spacing
+
+BACKEND:
+- Node.js + Express
+- SQLite (best for Replit free)
+- Drizzle ORM or better-sqlite3
+- JWT authentication or cookie-based sessions
+
+API ROUTES:
+- /api/auth/*
+- /api/providers/*
+- /api/bookings/*
+- /api/messages/*
+- /api/admin/*
+
+IMPORTANT:
+- Seed script with sample providers, categories, and users.
+
+==========================================================
+🎯 BUILD ORDER
+==========================================================
+1. Create full folder structure (frontend + backend).
+2. Add Tailwind + premium UI layout first (homepage, navbar, hero).
+3. Define DB schema for users, providers, bookings, messages.
+4. Build APIs.
+5. Connect UI to API.
+6. Build dashboards (User, Provider, Admin).
+7. Add local AI-style “smart matching” (sorting by location, rating, price).
+
+==========================================================
+FINAL RULE:
+EVERY PAGE must look premium like Jiffy + UrbanPro + Airbnb.
+Do NOT fall back to boring blocks or directory UI.
+
+Start now by scaffolding the structure and creating the homepage UI exactly like above.

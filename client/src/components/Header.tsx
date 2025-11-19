@@ -90,6 +90,10 @@ export default function Header() {
                   <DropdownMenuSeparator />
                   {user?.role === 'customer' && (
                     <>
+                      <DropdownMenuItem onClick={() => setLocation('/dashboard')} data-testid="link-dashboard">
+                        <User className="h-4 w-4 mr-2" />
+                        My Dashboard
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setLocation('/instant-browse')} data-testid="link-instant-browse">
                         Instant Browse
                       </DropdownMenuItem>
@@ -190,6 +194,20 @@ export default function Header() {
           
           {isAuthenticated && (
             <>
+              {user?.role === 'customer' && (
+                <Button 
+                  variant="ghost" 
+                  onClick={() => {
+                    setLocation('/dashboard');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start"
+                  data-testid="mobile-link-dashboard"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  My Dashboard
+                </Button>
+              )}
               {user?.role === 'provider' && (
                 <Button 
                   variant="ghost" 

@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatMoney } from "@/lib/money";
-import { Calendar, Clock, MapPin, User, FileText } from "lucide-react";
+import { Calendar, Clock, MapPin, User, FileText, Star } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 
@@ -25,8 +27,10 @@ type Booking = {
   priceCard: {
     title: string;
     category: string;
+    serviceId?: string | null;
   };
   provider: {
+    id: string;
     firstName: string;
     lastName: string;
   };
@@ -43,6 +47,10 @@ type Booking = {
 export default function MyBookings() {
   const { toast } = useToast();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
 
   const { data: bookings, isLoading } = useQuery<Booking[]>({
     queryKey: ['/api/bookings/mine'],
@@ -89,6 +97,58 @@ export default function MyBookings() {
       });
     }
   });
+
+  const submitReviewMutation = useMutation({
+    mutationFn: async (data: { providerId: string; serviceId: string; rating: number; comment: string }) => {
+      const res = await apiRequest('POST', '/api/reviews', data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/mine'] });
+      setReviewDialogOpen(false);
+      setRating(0);
+      setComment('');
+      setReviewBooking(null);
+      toast({
+        title: "Review submitted",
+        description: "Thank you for your feedback!"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleSubmitReview = () => {
+    if (!reviewBooking || rating === 0) {
+      toast({
+        title: "Error",
+        description: "Please select a rating",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (comment.trim().length < 10) {
+      toast({
+        title: "Error",
+        description: "Review must be at least 10 characters",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    submitReviewMutation.mutate({
+      providerId: reviewBooking.provider.id,
+      serviceId: reviewBooking.priceCard.serviceId || '',
+      rating,
+      comment: comment.trim()
+    });
+  };
 
   const sortedBookings = bookings?.sort((a, b) => {
     return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime();
@@ -279,6 +339,115 @@ export default function MyBookings() {
                   <span>Total</span>
                   <span>{formatMoney(selectedBooking.total)}</span>
                 </div>
+              </div>
+              
+              {selectedBooking.status === 'completed' && (
+                <div className="flex gap-2 justify-end pt-4 border-t">
+                  <Button
+                    variant="default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReviewBooking(selectedBooking);
+                      setReviewDialogOpen(true);
+                      setSelectedBooking(null);
+                    }}
+                    data-testid={`button-review-${selectedBooking.id}`}
+                  >
+                    <Star className="h-4 w-4 mr-2" />
+                    Leave a Review
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={reviewDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setReviewDialogOpen(false);
+          setReviewBooking(null);
+          setRating(0);
+          setComment('');
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leave a Review</DialogTitle>
+          </DialogHeader>
+          {reviewBooking && (
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  How was your experience with {reviewBooking.provider.firstName} {reviewBooking.provider.lastName}?
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Rating</Label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className="focus:outline-none"
+                      data-testid={`star-${star}`}
+                    >
+                      <Star
+                        className={`h-8 w-8 ${
+                          star <= rating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-muted-foreground'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="review-comment">Your Review</Label>
+                <Textarea
+                  id="review-comment"
+                  placeholder="Share your experience (minimum 10 characters)..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={4}
+                  data-testid="input-review-comment"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {comment.length}/10 characters minimum
+                </p>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setReviewDialogOpen(false);
+                    setReviewBooking(null);
+                    setRating(0);
+                    setComment('');
+                  }}
+                  data-testid="button-cancel-review"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitReview}
+                  disabled={submitReviewMutation.isPending || rating === 0 || comment.trim().length < 10}
+                  data-testid="button-submit-review"
+                >
+                  {submitReviewMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Review'
+                  )}
+                </Button>
               </div>
             </div>
           )}
