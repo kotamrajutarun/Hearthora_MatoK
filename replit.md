@@ -1,10 +1,10 @@
-# Hearthora - Service Provider Marketplace
+# MatoK - Service Provider Marketplace
 
-A full-stack marketplace web application connecting customers with local service providers (UrbanPro clone).
+A full-stack marketplace web application connecting customers with local service providers.
 
 ## Overview
 
-Hearthora is a professional marketplace platform that enables customers to find and hire local service providers across multiple categories including tutoring, home services, fitness, music & arts, and technology. The platform features inquiry-based quote requests, in-app messaging, provider profiles with ratings/reviews, comprehensive service listings with advanced filtering, AND Jiffy-style instant booking with fixed-price services.
+MatoK is a professional marketplace platform that enables customers to find and hire local service providers across multiple categories including tutoring, home services, fitness, music & arts, and technology. The platform features inquiry-based quote requests, in-app messaging, provider profiles with ratings/reviews, comprehensive service listings with advanced filtering, AND Jiffy-style instant booking with fixed-price services.
 
 ## Recent Changes
 

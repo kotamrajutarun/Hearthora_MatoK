@@ -36,20 +36,8 @@ function Router() {
       <Route path="/instant-browse" component={InstantBrowse} />
       <Route path="/my-addresses" component={Addresses} />
       <Route path="/my-bookings" component={MyBookings} />
-      <Route path="/ask-answer">
-        {() => <Placeholder title="Ask & Answer" description="Get your questions answered by experts in the community" />}
-      </Route>
       <Route path="/success-stories">
         {() => <Placeholder title="Success Stories" description="Read inspiring stories from our students and tutors" />}
-      </Route>
-      <Route path="/paid-courses">
-        {() => <Placeholder title="Paid Courses" description="Explore our premium online courses" />}
-      </Route>
-      <Route path="/free-classes">
-        {() => <Placeholder title="Free Classes" description="Join our free live classes and workshops" />}
-      </Route>
-      <Route path="/tuition-fees">
-        {() => <Placeholder title="Tuition Fees Calculator" description="Calculate estimated tuition costs for different courses" />}
       </Route>
       <Route path="/write-review">
         {() => <Placeholder title="Write a Review" description="Share your experience with tutors and services" />}

@@ -6,7 +6,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Hearthora</h3>
+            <h3 className="text-lg font-semibold mb-4">MatoK</h3>
             <p className="text-sm text-muted-foreground">
               Connect with trusted local service providers for all your needs.
             </p>
@@ -82,7 +82,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Hearthora. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} MatoK. All rights reserved.</p>
         </div>
       </div>
     </footer>

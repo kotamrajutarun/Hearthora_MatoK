@@ -75,7 +75,7 @@ export default function Register() {
       <Card className="w-full max-w-md p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold mb-2">Create Account</h1>
-          <p className="text-muted-foreground">Join Hearthora today</p>
+          <p className="text-muted-foreground">Join MatoK today</p>
         </div>
 
         <Form {...form}>

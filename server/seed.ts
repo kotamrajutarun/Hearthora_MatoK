@@ -51,6 +51,7 @@ export async function seedDatabase() {
         { name: 'Accounting & Tax Services', description: 'Bookkeeping, tax filing, financial consulting', icon_url: '/icons/categories/Accounting & Tax Services.png' },
         { name: 'Real Estate & Interior', description: 'Property consulting, interior design, home staging', icon_url: '/icons/categories/Real Estate & Interior.png' },
         { name: 'Workshops & Community Classes', description: 'Skill workshops, community learning, group classes', icon_url: '/icons/categories/Workshops & Community Classes.png' },
+        { name: 'Religious Services', description: 'Religious counseling, spiritual guidance, faith-based discussions', icon_url: '/icons/categories/Others.png' },
         { name: 'Others', description: 'Other services not listed in categories', icon_url: '/icons/categories/Others.png' }
       ];
 
@@ -60,7 +61,7 @@ export async function seedDatabase() {
         categories.push(created);
       }
 
-      console.log('Database seeded with 39 categories');
+      console.log('Database seeded with 40 categories');
     }
 
     const hashedPassword = await bcrypt.hash('provider123', 10);

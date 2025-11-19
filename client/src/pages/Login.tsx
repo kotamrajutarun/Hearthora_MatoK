@@ -64,7 +64,7 @@ export default function Login() {
       <Card className="w-full max-w-md p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold mb-2">Welcome Back</h1>
-          <p className="text-muted-foreground">Login to your Hearthora account</p>
+          <p className="text-muted-foreground">Login to your MatoK account</p>
         </div>
 
         <Form {...form}>

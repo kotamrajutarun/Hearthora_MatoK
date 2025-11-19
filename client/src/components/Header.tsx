@@ -29,11 +29,7 @@ export default function Header() {
 
   const navLinks = [
     { label: 'Browse Providers', href: '/providers' },
-    { label: 'Ask & Answer', href: '/ask-answer' },
     { label: 'Success Stories', href: '/success-stories' },
-    { label: 'Paid Courses', href: '/paid-courses' },
-    { label: 'Free Classes', href: '/free-classes' },
-    { label: 'Tuition Fees', href: '/tuition-fees' },
     { label: 'Write Review', href: '/write-review' },
     { label: 'All Categories', href: '/providers' },
     { label: 'Help', href: '/help' },
@@ -46,9 +42,9 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
             <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg md:text-xl">H</span>
+              <span className="text-primary-foreground font-bold text-lg md:text-xl">M</span>
             </div>
-            <span className="text-xl md:text-2xl font-semibold">Hearthora</span>
+            <span className="text-xl md:text-2xl font-semibold">MatoK</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -140,28 +136,6 @@ export default function Header() {
             )}
           </nav>
 
-          {/* UrbanPro-style CTAs (Desktop Only) */}
-          <div className="hidden lg:flex items-center gap-3">
-            {!isAuthenticated && (
-              <>
-                <Button 
-                  onClick={() => setLocation('/register?role=customer')}
-                  className="bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:bg-[hsl(var(--warning))]/90 border-0 font-semibold px-6"
-                  data-testid="button-post-learning-need"
-                >
-                  Post Learning Need
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => setLocation('/register?role=provider')}
-                  className="border-primary text-primary hover:bg-primary/5 font-semibold px-6"
-                  data-testid="button-signup-tutor"
-                >
-                  Signup as a Tutor
-                </Button>
-              </>
-            )}
-          </div>
 
           {/* Mobile Menu Button */}
           <Button 
@@ -214,7 +188,7 @@ export default function Header() {
             </Button>
           )}
           
-          {isAuthenticated ? (
+          {isAuthenticated && (
             <>
               {user?.role === 'provider' && (
                 <Button 
@@ -241,30 +215,6 @@ export default function Header() {
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                onClick={() => {
-                  setLocation('/register?role=customer');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:bg-[hsl(var(--warning))]/90 border-0 font-semibold"
-                data-testid="mobile-button-post-learning-need"
-              >
-                Post Learning Need
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  setLocation('/register?role=provider');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full border-primary text-primary hover:bg-primary/5 font-semibold"
-                data-testid="mobile-button-signup-tutor"
-              >
-                Signup as a Tutor
               </Button>
             </>
           )}
