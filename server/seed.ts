@@ -13,26 +13,45 @@ export async function seedDatabase() {
 
     if (shouldSeedBasicData) {
       const categoryData = [
-        {
-          name: 'Tutoring & Education',
-          description: 'Academic tutoring, test prep, language learning'
-        },
-        {
-          name: 'Home Services',
-          description: 'Plumbing, electrical, cleaning, repairs'
-        },
-        {
-          name: 'Fitness & Wellness',
-          description: 'Personal training, yoga, nutrition coaching'
-        },
-        {
-          name: 'Music & Arts',
-          description: 'Music lessons, art classes, creative workshops'
-        },
-        {
-          name: 'Technology',
-          description: 'Web development, IT support, software training'
-        }
+        { name: 'Tutoring & Education', description: 'Academic tutoring, test prep, language learning', icon_url: '/icons/categories/Tutoring & Education.png' },
+        { name: 'Music & Dance Classes', description: 'Music lessons, dance training, performance arts', icon_url: '/icons/categories/Music & Dance Classes.png' },
+        { name: 'Language Classes', description: 'English, foreign languages, conversation practice', icon_url: '/icons/categories/Language Classes.png' },
+        { name: 'Art & Craft Classes', description: 'Painting, drawing, crafts, creative workshops', icon_url: '/icons/categories/Art & Craft Classes.png' },
+        { name: 'Yoga & Fitness Training', description: 'Yoga, personal training, fitness coaching', icon_url: '/icons/categories/Yoga & Fitness Training.png' },
+        { name: 'Health & Wellness Therapies', description: 'Massage, physiotherapy, wellness treatments', icon_url: '/icons/categories/Health & Wellness Therapies.png' },
+        { name: 'Personal Coaching & Life Skills', description: 'Life coaching, career guidance, skill development', icon_url: '/icons/categories/Personal Coaching & Life Skills.png' },
+        { name: 'Plumbing', description: 'Pipe repair, leak fixing, bathroom & kitchen plumbing', icon_url: '/icons/categories/Plumbing.png' },
+        { name: 'Electrical Work', description: 'Wiring, fixture installation, electrical repairs', icon_url: '/icons/categories/Electrical Work.png' },
+        { name: 'Cleaning & Deep Cleaning', description: 'House cleaning, deep cleaning, sanitization', icon_url: '/icons/categories/Cleaning & Deep Cleaning.png' },
+        { name: 'Home Repairs & Handyman', description: 'General repairs, maintenance, odd jobs', icon_url: '/icons/categories/Home Repairs & Handyman.png' },
+        { name: 'Carpentry & Furniture Assembly', description: 'Furniture making, repairs, assembly services', icon_url: '/icons/categories/Carpentry & Furniture Assembly.png' },
+        { name: 'Painting & Polishing', description: 'Interior/exterior painting, wall finishing, polishing', icon_url: '/icons/categories/Painting & Polishing.png' },
+        { name: 'Pest Control', description: 'Termite treatment, pest removal, fumigation', icon_url: '/icons/categories/Pest Control.png' },
+        { name: 'Appliance Repair', description: 'Washing machine, refrigerator, AC repair', icon_url: '/icons/categories/Appliance Repair.png' },
+        { name: 'AC Installation & Maintenance', description: 'Air conditioner installation, repair, servicing', icon_url: '/icons/categories/AC Installation & Maintenance.png' },
+        { name: 'Gardening & Lawn Care', description: 'Garden maintenance, landscaping, lawn mowing', icon_url: '/icons/categories/Gardening & Lawn Care.png' },
+        { name: 'Home Security & CCTV Installation', description: 'Security systems, CCTV setup, smart locks', icon_url: '/icons/categories/Home Security & CCTV Installation.png' },
+        { name: 'Home Sanitization & Disinfection', description: 'Deep sanitization, disinfection services', icon_url: '/icons/categories/Home Sanitization & Disinfection.png' },
+        { name: 'IT Support & Computer Repair', description: 'Computer repair, software installation, tech support', icon_url: '/icons/categories/IT Support & Computer Repair.png' },
+        { name: 'Tech & Digital Services', description: 'Web development, app development, digital marketing', icon_url: '/icons/categories/Tech & Digital Services.png' },
+        { name: 'Mobile & Gadget Repair', description: 'Phone repair, tablet repair, gadget servicing', icon_url: '/icons/categories/Mobile & Gadget Repair.png' },
+        { name: 'Beauty & Makeup', description: 'Makeup services, hair styling, beauty treatments', icon_url: '/icons/categories/Beauty & Makeup.png' },
+        { name: 'Mehndi & Henna Art', description: 'Bridal mehndi, henna design, traditional art', icon_url: '/icons/categories/Mehndi & Henna Art.png' },
+        { name: 'Photography & Videography', description: 'Event photography, video production, photo editing', icon_url: '/icons/categories/Photography & Videography.png' },
+        { name: 'Event Planning & Decoration', description: 'Party planning, decoration, event management', icon_url: '/icons/categories/Event Planning & Decoration.png' },
+        { name: 'Catering & Baking', description: 'Catering services, cake making, custom baking', icon_url: '/icons/categories/Catering & Baking.png' },
+        { name: 'Home Cook & Tiffin Service', description: 'Home-cooked meals, tiffin delivery, meal prep', icon_url: '/icons/categories/Home Cook & Tiffin Service.png' },
+        { name: 'Child & Elder Care', description: 'Babysitting, nanny services, elder care', icon_url: '/icons/categories/Child & Elder Care.png' },
+        { name: 'Pet Care & Grooming', description: 'Dog walking, pet grooming, pet sitting', icon_url: '/icons/categories/Pet Care & Grooming.png' },
+        { name: 'Laundry & Ironing', description: 'Laundry services, dry cleaning, ironing', icon_url: '/icons/categories/Laundry & Ironing.png' },
+        { name: 'Tailoring & Alterations', description: 'Clothing alterations, stitching, custom tailoring', icon_url: '/icons/categories/Tailoring & Alterations.png' },
+        { name: 'Driving & Vehicle Services', description: 'Driver services, car wash, vehicle maintenance', icon_url: '/icons/categories/Driving & Vehicle Services.png' },
+        { name: 'Moving & Packing', description: 'Relocation services, packing, moving assistance', icon_url: '/icons/categories/Moving & Packing.png' },
+        { name: 'Legal & Immigration', description: 'Legal consultation, immigration services, documentation', icon_url: '/icons/categories/Legal & Immigration.png' },
+        { name: 'Accounting & Tax Services', description: 'Bookkeeping, tax filing, financial consulting', icon_url: '/icons/categories/Accounting & Tax Services.png' },
+        { name: 'Real Estate & Interior', description: 'Property consulting, interior design, home staging', icon_url: '/icons/categories/Real Estate & Interior.png' },
+        { name: 'Workshops & Community Classes', description: 'Skill workshops, community learning, group classes', icon_url: '/icons/categories/Workshops & Community Classes.png' },
+        { name: 'Others', description: 'Other services not listed in categories', icon_url: '/icons/categories/Others.png' }
       ];
 
       categories = [];
@@ -41,7 +60,7 @@ export async function seedDatabase() {
         categories.push(created);
       }
 
-      console.log('Database seeded with 5 categories');
+      console.log('Database seeded with 39 categories');
     }
 
     const hashedPassword = await bcrypt.hash('provider123', 10);
